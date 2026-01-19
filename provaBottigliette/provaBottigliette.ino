@@ -87,7 +87,7 @@ int n_within = 0; // Counter for number of consecutive trials where timeDifferen
   {
     digitalWrite(11,"HIGH");
     delay(500);
-    digitalWrite(11,LOW);
+    digitalWrite(11,"LOW");
 
      n_outside = n_outside + 1;
      if (n_outside == 2)
