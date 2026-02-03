@@ -1,7 +1,7 @@
 // First participant's variable initialization
-const int buttonPin1 = 4;
+const int buttonPin1 = 7;
 const int touchPinUP1 = 3;
-const int touchPinDOWN1 = 5;
+const int touchPinDOWN1 = 2;
 
 bool touchUP1 = false;
 bool touchDOWN1 = false;
@@ -11,9 +11,9 @@ unsigned long graspingTime1;
 unsigned long totalTime1;
 
 // Second participant's variable initialization
-const int buttonPin2 = 7;
-const int touchPinUP2 = 6;
-const int touchPinDOWN2 = 8;
+const int buttonPin2 = 8;
+const int touchPinUP2 = 5;
+const int touchPinDOWN2 = 4;
 
 bool touchUP2 = false;
 bool touchDOWN2 = false;
@@ -25,7 +25,7 @@ unsigned long totalTime2;
 // Other variables initialization
 unsigned long timeDifference;
 unsigned long timeWin = 0.25; //initialize time window: 250 ms
-int n_otuside = 0; // Counter for number of consecutive trials where timeDifference is outside time window
+int n_outside = 0; // Counter for number of consecutive trials where timeDifference is outside time window
 int n_within = 0; // Counter for number of consecutive trials where timeDifference is within time window
 // Utily functions
 
