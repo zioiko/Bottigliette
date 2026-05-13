@@ -27,6 +27,12 @@ unsigned long timeDifference;
 unsigned long timeWin = 0.25; //initialize time window: 250 ms
 int n_outside = 0; // Counter for number of consecutive trials where timeDifference is outside time window
 int n_within = 0; // Counter for number of consecutive trials where timeDifference is within time window
+bool b1 = false; //condition for button1 released
+bool b2 = false; //condition for button2 released
+bool isPressed1 = false; // condition for button 1 press
+bool isPressed2 = false; // condition for button 2 press
+bool isNotPressed1 = false;
+bool isNotPressed2 = false;
 // Utily functions
 
   unsigned long GetTime1(unsigned long startTime1)
@@ -129,7 +135,7 @@ void loop() {
   int buttonState2 = digitalRead(buttonPin2);
   int touchStateUP2 = digitalRead(touchPinUP2);
   int touchStateDOWN2 = digitalRead(touchPinDOWN2);
- 
+
   // ____________________________________________
   // ----------------FIRST BOTTLE----------------
   // ____________________________________________
@@ -137,6 +143,13 @@ void loop() {
   if (buttonState1 == LOW && (!touchUP1 && !touchDOWN1)) {
   startTime1 = millis();
   buttonReleased1 = true;
+  b1 = true;
+  delay(10);
+  }
+
+  if (b1 && buttonState1 == HIGH) { //Start soggetto 1
+    Serial.println("Button 1 released");
+    b1 = false;
   }
 
   // First bottle, up part
@@ -172,6 +185,7 @@ void loop() {
     buttonReleased1 = false;  
     
   }
+  
 
   // ____________________________________________
   // -------------SECOND BOTTLE----------------
@@ -179,8 +193,15 @@ void loop() {
   // Start record time when button is not pressed
   if (buttonState2 == LOW && (!touchUP2 && !touchDOWN2)) {
   startTime2 = millis();
-  Serial.println(startTime2);
+  //Serial.println(startTime2);
   buttonReleased2 = true;
+  b2 = true;
+  delay(10);
+  }
+
+  if (b2 && buttonState2 == HIGH) { //Start soggetto 2
+    Serial.println("Button 2 released");
+    b2 = false;
   }
 
   // Second bottle, up part
@@ -197,6 +218,7 @@ void loop() {
     Serial.println(totalTime2);
     touchUP2 = false;
     buttonReleased2 = false;
+    
     
   }
   // Second bottle, down part
@@ -215,7 +237,9 @@ void loop() {
     touchDOWN2 = false;
     buttonReleased2 = false;  
     
+    
   }
+  
    // Calculate time difference between participants' grasping
   if (graspingTime1 > 0 && graspingTime2 > 0)
   {
@@ -227,4 +251,28 @@ void loop() {
     graspingTime1 = 0;
     graspingTime2 = 0;
   }
+
+  // Send info on grasping state
+ if (buttonState1 == LOW && isPressed1 == false ) 
+ {
+    Serial.println("Button 1 pressed");
+    isPressed1 = true;
+    isNotPressed1=false;
+ }
+  if (buttonState1 == HIGH && isNotPressed1 == false) {
+  Serial.println("Button 1 not pressed");
+  isNotPressed1 = true;
+  isPressed1 = false;
+ }
+  if (buttonState2 == LOW && isPressed2 == false ) 
+ {
+    Serial.println("Button 2 pressed");
+    isPressed2 = true;
+    isNotPressed2=false;
+ }
+  if (buttonState2 == HIGH && isNotPressed2 == false) {
+  Serial.println("Button 2 not pressed");
+  isNotPressed2 = true;
+  isPressed2 = false;
+ }
 }
