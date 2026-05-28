@@ -8,9 +8,9 @@ PORT = 'COM3'
 BAUDRATE = 9600
 line = ''  # current line read from Arduino
 lines = [] # save outputs red by Arduino in this list
-output_file = r"C:\Users\feder\Documents\GitHub\Bottigliette\provaBottigliette\output.csv"
+output_file = r"C:\\Users\\feder\\Documents\\GitHub\\Bottigliette\\provaBottigliette\\output_arduino_temp.csv"
 output_matrix = np.zeros((200, 9),dtype=object)
-output_matrix[0,:] = ['GraspSubj1', 'GraspSubj2', 'TotalTimeSubj1', 'TotalTimeSubj2','EndTime1', 'EndTime2','DeltaGrasp','DeltaTempoMov','DeltaStart']
+output_matrix[0,:] = ['GraspSubj1', 'GraspSubj2','DeltaTempoMov','Button_time_released_1','Button_time_released_2']
 i=1 #counter for rows in output array
 # Pannello per visualizzare i pulsanti premuti
 
@@ -34,15 +34,15 @@ def parseOutputs(lines,output_matrix,i):
             GraspSubj1 = int(output[1])
         if (('Grasping time UP2' in line) or ('Grasping time DOWN2' in line)):
             GraspSubj2 = int(output[1])
-        if (('Total time UP1' in line) or ('Total time DOWN1' in line)):
+        #if (('Total time UP1' in line) or ('Total time DOWN1' in line)):
             TotalTimeSubj1 = int(output[1])
-        if (('Total time UP2' in line) or ('Total time DOWN2' in line)):
+        #if (('Total time UP2' in line) or ('Total time DOWN2' in line)):
             TotalTimeSubj2 = int(output[1])
-        output_matrix[i,0] = GraspSubj1
+        output_matrix[i,0] = GraspSubj1 #rilascio pulsante fino a tocco
         output_matrix[i,1] = GraspSubj2
-        output_matrix[i,2] = TotalTimeSubj1
-        output_matrix[i,3] = TotalTimeSubj2
-    
+       # output_matrix[i,2] = TotalTimeSubj1 #rilascio pulsante a ritorno pulsante
+       # output_matrix[i,3] = TotalTimeSubj2
+        output_matrix[i,2] = np.abs(GraspSubj1-GraspSubj2)
 
 ser = open_serial(PORT, BAUDRATE)
 
@@ -65,11 +65,11 @@ try:
 
 
             if 'Button 1 released' in line:
-                end_time1 = time.time()
-                output_matrix[i,4] = end_time1
+                Button_time_released_1 = time.time()
+                output_matrix[i,3] = Button_time_released_1
             if 'Button 2 released' in line:
-                end_time2 = time.time()
-                output_matrix[i,5] = end_time2
+                Button_time_released_2 = time.time()
+                output_matrix[i,4] = Button_time_released_2
                 
         parseOutputs(lines,output_matrix,i)
         i+=1

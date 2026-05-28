@@ -33,6 +33,8 @@ bool isPressed1 = false; // condition for button 1 press
 bool isPressed2 = false; // condition for button 2 press
 bool isNotPressed1 = false;
 bool isNotPressed2 = false;
+bool SUB1returned = false; // condition to indicate SUB pressed the button after grasping
+bool SUB2returned = false;
 // Utily functions
 
   unsigned long GetTime1(unsigned long startTime1)
@@ -157,6 +159,7 @@ void loop() {
     graspingTime1 = GetTime1(startTime1);
     Serial.print("Grasping time UP1:");
     Serial.println(graspingTime1);
+    Serial.print("SUB1 Grasped");
     touchUP1 = true;
   }
 
@@ -166,6 +169,8 @@ void loop() {
     Serial.println(totalTime1);
     touchUP1 = false;
     buttonReleased1 = false;
+    SUB1returned = true;
+
     
   }
   // First bottle, down part
@@ -174,6 +179,7 @@ void loop() {
     graspingTime1 = GetTime1(startTime1);
     Serial.print("Grasping time DOWN1:");
     Serial.println(graspingTime1);
+    Serial.print("SUB1 Grasped");
     touchDOWN1 = true;
   }
 
@@ -183,6 +189,9 @@ void loop() {
     Serial.println(totalTime1);
     touchDOWN1 = false;
     buttonReleased1 = false;  
+    SUB1returned = true;
+
+
     
   }
   
@@ -209,6 +218,7 @@ void loop() {
     graspingTime2 = GetTime2(startTime2);
     Serial.print("Grasping time UP2:");
     Serial.println(graspingTime2);
+    Serial.print("SUB2 Grasped");
     touchUP2 = true;
   }
 
@@ -218,7 +228,8 @@ void loop() {
     Serial.println(totalTime2);
     touchUP2 = false;
     buttonReleased2 = false;
-    
+    SUB2returned = true;
+
     
   }
   // Second bottle, down part
@@ -227,6 +238,7 @@ void loop() {
     graspingTime2 = GetTime2(startTime2);
     Serial.print("Grasping time DOWN2:");
     Serial.println(graspingTime2);
+    Serial.print("SUB2 Grasped");
     touchDOWN2 = true;
   }
 
@@ -236,7 +248,7 @@ void loop() {
     Serial.println(totalTime2);
     touchDOWN2 = false;
     buttonReleased2 = false;  
-    
+    SUB2returned = true;
     
   }
   
@@ -274,5 +286,11 @@ void loop() {
   Serial.println("Button 2 not pressed");
   isNotPressed2 = true;
   isPressed2 = false;
+ }
+ if (SUB1returned && SUB2returned)
+ {
+  Serial.print("Subjects came back");
+  SUB1returned = false;
+  SUB2returned = false;
  }
 }
