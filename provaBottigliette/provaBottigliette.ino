@@ -160,6 +160,7 @@ void loop() {
     Serial.print("Grasping time UP1:");
     Serial.println(graspingTime1);
     Serial.print("SUB1 Grasped");
+    Serial.print("SUB1 UP");
     touchUP1 = true;
   }
 
@@ -181,6 +182,8 @@ void loop() {
     Serial.println(graspingTime1);
     Serial.print("SUB1 Grasped");
     touchDOWN1 = true;
+    Serial.print("SUB1 DOWN");
+
   }
 
   if (buttonState1 == LOW && touchDOWN1 == true && buttonReleased1 == true) {
@@ -219,6 +222,8 @@ void loop() {
     Serial.print("Grasping time UP2:");
     Serial.println(graspingTime2);
     Serial.print("SUB2 Grasped");
+    Serial.print("SUB2 UP");
+
     touchUP2 = true;
   }
 
@@ -239,6 +244,8 @@ void loop() {
     Serial.print("Grasping time DOWN2:");
     Serial.println(graspingTime2);
     Serial.print("SUB2 Grasped");
+    Serial.print("SUB2 DOWN");
+
     touchDOWN2 = true;
   }
 

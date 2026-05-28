@@ -6,7 +6,7 @@ import csv
 
 def startTrial(trial,output_matrix):
     while True:
-        user_input = input("Premi 'a' per avviare la prova, 'q' per uscire: ")
+        user_input = input("Premi 'a' per avviare il trial, 'q' per uscire: ")
         if user_input == 'q':
             print('Uscita.')
 
@@ -15,7 +15,20 @@ def startTrial(trial,output_matrix):
             start_time = time.time()
             print('Timer avviato.')
             completeTrial(trial,start_time,output_matrix)
-          
+            with open(output_file, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerows(output_matrix)
+            trial=trial+1
+        elif user_input == 'r':
+            trial = resetTrial(output_matrix,trial)
+            print('Trial resettato. Premi "a" per avviare un nuovo trial.')
+        
+def resetTrial(output_matrix,trial):
+    output_matrix[trial,0:9] = 0  
+    trial=trial-1
+    if trial < 1:
+        trial=1
+    return trial
             
 
 
@@ -50,7 +63,15 @@ def completeTrial(trial,start_time,output_matrix):
         if 'SUB2 Grasped' in line:
             StopSub2 = time.time()
             output_matrix[trial,7] = int((StopSub2-start_time)*1000)
-            
+        if 'SUB1 UP' in line:
+            output_matrix[trial,9] = 1
+        if 'SUB1 DOWN' in line:
+            output_matrix[trial,9] = 2
+        if 'SUB2 UP' in line:
+            output_matrix[trial,10] = 1
+        if 'SUB2 DOWN' in line:
+            output_matrix[trial,10] = 2
+
     parseOutputs(lines,output_matrix,trial)
     output_matrix[trial,5] = np.abs(output_matrix[trial,3]-output_matrix[trial,4])
     output_matrix[trial,8] = np.abs(output_matrix[trial,6]-output_matrix[trial,7])
@@ -89,11 +110,8 @@ PORT = 'COM3'
 BAUDRATE = 9600
 ser = open_serial(PORT, BAUDRATE)
 output_file = r"C:\\Users\\feder\\Documents\\GitHub\\Bottigliette\\provaBottigliette\\output_python_temp.csv"
-output_matrix = np.zeros((200, 9),dtype=object)
-output_matrix[0,:] = ['Tempo Movimento SUB 1', 'Tempo Movimento SUB 2','Asincronia Tempo Movimento','Start SUB1','Start SUB 2',',Asincronia Start','Stop SUB 1', 'Stop SUB 2','Asincronia Grasp']
+output_matrix = np.zeros((200, 11),dtype=object)
+output_matrix[0,:] = ['Tempo Movimento SUB 1', 'Tempo Movimento SUB 2','Asincronia Tempo Movimento','Start SUB1','Start SUB 2',',Asincronia Start','Stop SUB 1', 'Stop SUB 2','Asincronia Grasp','Tocco Effettivo SUB1', 'Tocco Effettivo SUB2']
 trial=1
 startTrial(trial,output_matrix)
 #save output_matrix
-with open(output_file, 'w', newline='') as f:
-    writer = csv.writer(f)
-    writer.writerows(output_matrix)
