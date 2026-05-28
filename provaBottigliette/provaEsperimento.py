@@ -22,7 +22,7 @@ def startTrial(trial,output_matrix):
 def completeTrial(trial,start_time,output_matrix):
     line = ''  # current line read from Arduino
     lines = [] # save outputs red by Arduino in this list
-    while 'Subjects came back'  not in line: # poi da sostituire con "time difference between grasps:"
+    while 'time difference between grasps'  not in line: # poi da sostituire con "time difference between grasps:"
         raw = ser.readline()              
         if not raw:
             continue
@@ -52,8 +52,8 @@ def completeTrial(trial,start_time,output_matrix):
             output_matrix[trial,7] = int((StopSub2-start_time)*1000)
             
     parseOutputs(lines,output_matrix,trial)
-    output_matrix[trial,5] = np.abs(ButtonTimeReleased1-ButtonTimeReleased2)
-    output_matrix[trial,8] = np.abs(StopSub1-StopSub2)
+    output_matrix[trial,5] = np.abs(output_matrix[trial,3]-output_matrix[trial,4])
+    output_matrix[trial,8] = np.abs(output_matrix[trial,6]-output_matrix[trial,7])
     line = []
 
 def open_serial(PORT, BAUDRATE):
