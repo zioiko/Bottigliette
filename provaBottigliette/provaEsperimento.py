@@ -2,12 +2,14 @@
 import time
 import numpy as np
 import serial
+import csv
 
 def startTrial(trial,output_matrix):
     while True:
         user_input = input("Premi 'a' per avviare la prova, 'q' per uscire: ")
         if user_input == 'q':
             print('Uscita.')
+
             break
         elif user_input == 'a':
             start_time = time.time()
@@ -38,16 +40,16 @@ def completeTrial(trial,start_time,output_matrix):
 
         if 'Button 1 released' in line:
             ButtonTimeReleased1 = time.time()
-            output_matrix[trial,3] = ButtonTimeReleased1-start_time
+            output_matrix[trial,3] = int((ButtonTimeReleased1-start_time)*1000)
         if 'Button 2 released' in line:
             ButtonTimeReleased2 = time.time()
-            output_matrix[trial,4] = ButtonTimeReleased2-start_time
+            output_matrix[trial,4] = int((ButtonTimeReleased2-start_time)*1000)
         if 'SUB1 Grasped' in line:
             StopSub1 = time.time()
-            output_matrix[trial,6] = StopSub1-start_time
+            output_matrix[trial,6] = int((StopSub1-start_time)*1000)
         if 'SUB2 Grasped' in line:
             StopSub2 = time.time()
-            output_matrix[trial,7] = StopSub2-start_time
+            output_matrix[trial,7] = int((StopSub2-start_time)*1000)
             
     parseOutputs(lines,output_matrix,trial)
     output_matrix[trial,5] = np.abs(ButtonTimeReleased1-ButtonTimeReleased2)
@@ -91,3 +93,7 @@ output_matrix = np.zeros((200, 9),dtype=object)
 output_matrix[0,:] = ['Tempo Movimento SUB 1', 'Tempo Movimento SUB 2','Asincronia Tempo Movimento','Start SUB1','Start SUB 2',',Asincronia Start','Stop SUB 1', 'Stop SUB 2','Asincronia Grasp']
 trial=1
 startTrial(trial,output_matrix)
+#save output_matrix
+with open(output_file, 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerows(output_matrix)
