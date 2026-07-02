@@ -14,7 +14,6 @@ import queue
 PORT = 'COM3'
 BAUDRATE = 9600
 
-output_file = r"C:\Users\feder\Documents\GitHub\Bottigliette\provaBottigliette\output_python_temp.csv"
 
 
 # ============================================================
@@ -236,7 +235,7 @@ def stop_button_thread_func():
 # TRIAL
 # ============================================================
 
-def startTrial(trial, output_matrix):
+def startTrial(trial, output_matrix,trial_vec):
     while True:
         user_input = input("Premi 'a' per avviare il trial, 'r' per resettare, 'q' per uscire: ")
 
@@ -252,11 +251,17 @@ def startTrial(trial, output_matrix):
             ser.reset_input_buffer()
 
             gui_queue.put("CLEAR_TOUCH_TEXTS")
-
+            # if trial_vec[trial-1] == 1:       #IF PER AUDIO DIVERSI IN BASE AL VETTORE RANDOMICIZZATO TRIAL_VEC
+            #     play.audio1
+            # elif trial_vec[trial-1] == 2:
+            #     play.audio2
+            # elif trial_vec[trial-1] == 3:
+            #     play.audio3
+            
             start_time = time.time()
             print('Timer avviato.')
 
-            completeTrial(trial, start_time, output_matrix)
+            completeTrial(trial, start_time, output_matrix, trial_vec[trial-1])
 
             with open(output_file, 'w', newline='') as f:
                 writer = csv.writer(f)
@@ -389,6 +394,28 @@ def parseOutputs(lines, output_matrix, trial):
 # MAIN
 # ============================================================
 
+block = 1
+trials = 160
+trial_vec=np.zeros(trials,dtype=int)
+conditions=[1,2,3,4] #conditions: free, opposite, same, lead12
+
+for i in range(0,trials):
+    if i < trials/4:
+        trial_vec[i]=conditions[0]
+    elif i < 2*trials/4 and i >= trials/4:
+        trial_vec[i]=conditions[1]
+    elif i < 3*trials/4 and i >= 2*trials/4:
+        trial_vec[i]=conditions[2]
+    elif i < trials and i >= 3*trials/4:
+        trial_vec[i]=conditions[3]
+
+# randomicizzazione trial_vec
+trial_vec=np.random.shuffle(trial_vec)
+audio1= ...
+audio2= ...
+
+output_file = f"C:\Users\feder\Documents\GitHub\Bottigliette\provaBottigliette\output_python_temp_{block}.csv"
+
 output_matrix = np.zeros((200, 11), dtype=object)
 
 output_matrix[0, :] = [
@@ -396,7 +423,7 @@ output_matrix[0, :] = [
     'Tempo Movimento SUB 2',
     'Asincronia Tempo Movimento',
     'Start SUB1',
-    'Start SUB 2',
+    'Start SUB2',
     'Asincronia Start',
     'Stop SUB 1',
     'Stop SUB 2',
