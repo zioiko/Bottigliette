@@ -5,7 +5,8 @@ import csv
 import tkinter as tk
 import threading
 import queue
-import simpleaudio as sa
+import winsound #proviamo questa libreria (nativa windows) per rirpodurre audio
+#import simpleaudio as sa
 #from goprocam import GoProCamera
 #import parallel
 
@@ -47,11 +48,14 @@ Session = ""
 Condition = ""
 
 #aggiungi audio condizione specifica (2 x 2)
-Cued1 = sa.WaveObject.from_wave_file("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
-Cued2 = sa.WaveObject.from_wave_file("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
-Cued3 = sa.WaveObject.from_wave_file("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
-Cued4 = sa.WaveObject.from_wave_file("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
-
+# Cued1 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
+# Cued2 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
+# Cued3 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
+# Cued4 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
+Cued1 = ("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
+Cued2 = ("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
+Cued3 = ("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
+Cued4 = ("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
 # ============================================================
 # GUI
 # ============================================================
@@ -188,7 +192,9 @@ def process_gui_queue():
 # ============================================================
 #def send_trigger(value):
     #ParalPort.setData(int(value))
-    #time.sleep(0.005)   # 5 ms pulse
+    #time.sleep(0.005)   # 5 ms pulse #**ATTENZIONE**: Così fermi per 5 ms tutto lo script, anche il tempo che vai a registrare con starttime.time()
+                            #piuttosto ci conviene mandare il trigger con ParalPort.setData(value) e poi, qualche riga dopo (così che l'ECG "veda" il trigger)
+                            # ParalPort.setData(0) senza sleep, così non blocchiamo tutto il programma.
     #ParalPort.setData(0)
 
 # ============================================================
@@ -357,19 +363,22 @@ def startTrial(trial, output_matrix,trial_vec):
 
             gui_queue.put("CLEAR_TOUCH_TEXTS")
 
-            #trigger_value = trigger_EEG_vec[trial - 1]
-            #send_trigger(trigger_value)
+            trigger_value = trigger_EEG_vec[trial - 1]
+            #send_trigger(trigger_value)   # invece di mandare trigger con la sua funzione con time.sleep farei:  
+            # ParalPort.setData(trigger_value)  # manda trigger   
+            if trial_vec[trial-1] == 1:       #IF PER AUDIO DIVERSI IN BASE AL VETTORE RANDOMICIZZATO TRIAL_VEC
+                winsound.PlaySound(Cued1, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            elif trial_vec[trial-1] == 2:
+                winsound.PlaySound(Cued2, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            elif trial_vec[trial-1] == 3:
+                winsound.PlaySound(Cued3, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            elif trial_vec[trial-1] == 4:  
+                winsound.PlaySound(Cued4, winsound.SND_FILENAME | winsound.SND_ASYNC)
 
-            #if trial_vec[trial-1] == 1:       #IF PER AUDIO DIVERSI IN BASE AL VETTORE RANDOMICIZZATO TRIAL_VEC
-                #Cued1.play()                    #Il problema del crush sta proprio nella riproduzione dell'audio
-            #elif trial_vec[trial-1] == 2:
-                #Cued2.play()
-            #elif trial_vec[trial-1] == 3:
-               # Cued3.play()
-            #elif trial_vec[trial-1] == 4:  
-                #Cued4.play()
-            
             start_time = time.time()
+            #ParalPort.setData(0)  # reset trigger subito dopo senza sleep, così non blocchiamo tutto il programma.
+                                    #il pc dovrebbe leggere una linea in 1 o 0.5 ms. Possiamo fare diverse prove ma raccomanderei questa modalità per mandare trigger
+                                    #senza mai inserire time.sleep().
             print('Timer avviato.')
 
             completeTrial(trial, start_time, output_matrix)
@@ -384,7 +393,9 @@ def startTrial(trial, output_matrix,trial_vec):
 
             start_button_thread()
 
-        elif user_input == 'r': #discutiamo se tenere questa opzione, perché nelle fisiologiche non puoi sottrare il trial quindi si potrebbe creare un mismatch 
+        elif user_input == 'r': #discutiamo se tenere questa opzione, perché nelle fisiologiche non puoi sottrare il trial quindi si potrebbe creare un mismatch
+                                #qui è facile. in post-processing cerchi quante volte compare uno stesso trigger (dato che sono numerati in base al trial specifico (trial_vec))
+                                # e poi ti prendi solo l'ultimo trial sulle fisiologiche. 
             #stop_recording()
             trial = resetTrial(output_matrix, trial)
 
@@ -491,7 +502,7 @@ def completeTrial(trial, start_time, output_matrix):
     parseOutputs(lines, output_matrix, trial)
 
     #stop_recording() #interrompe la registrazione
-    #time.sleep(1) #serve veramente
+    #time.sleep(1) #serve veramente #Perchè???
     #save_last_video(trial) #salva il video
 
 
@@ -551,7 +562,7 @@ conditions=[1,2,3,4] #conditions: Cued1[Giu{2}-Su{1}], Cued2[Su{1}-Giu{2}], Cued
 tocco_atteso_S1 = np.zeros(trials,dtype=int)
 tocco_atteso_S2 = np.zeros(trials,dtype=int)
 
-for i in range(0,trials):
+for i in range(0,trials): #DA RICONTROLLARE BENE PERCHE POTREBBERO VARIARE UN Pò
     if i < trials/4:
         trial_vec[i]=conditions[0]
     elif i < 2*trials/4 and i >= trials/4:
@@ -582,7 +593,7 @@ for i in range(0, trials):
 #creazione del vettore trigger EEG
 for i in range(0, trials):
     if trial_vec[i] == 1:
-        trigger_EEG_vec[i] = 11 #numeri al momento casuali, dispari perché l'ampli li preferisce
+        trigger_EEG_vec[i] = 11 #numeri al momento casuali, dispari perché l'ampli li preferisce #Fede: COOOSA?!
     elif trial_vec[i] == 2:
         trigger_EEG_vec[i] = 13
     elif trial_vec[i] == 3:
