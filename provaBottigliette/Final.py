@@ -5,7 +5,22 @@ import csv
 import tkinter as tk
 import threading
 import queue
+import simpleaudio as sa
+#from goprocam import GoProCamera
+#import parallel
 
+# ===========================================================
+# Parallel Port
+# ===========================================================
+#ParalPort = parallel.Parallel() #se non funziona aggiungere l'address; esempio: address=0x378
+#ParalPort.setData(0)
+
+
+# ===========================================================
+# Creo Webcam
+# ===========================================================
+
+#go_pro = GoProCamera.GoPro() # Da vedere bene
 
 # ============================================================
 # PARAMETRI
@@ -27,6 +42,15 @@ gui_queue = queue.Queue()
 button_thread = None
 stop_button_thread = threading.Event()
 
+Participant = ""
+Session = ""
+Condition = ""
+
+#aggiungi audio condizione specifica (2 x 2)
+Cued1 = sa.WaveObject.from_wave_file("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
+Cued2 = sa.WaveObject.from_wave_file("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
+Cued3 = sa.WaveObject.from_wave_file("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
+Cued4 = sa.WaveObject.from_wave_file("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
 
 # ============================================================
 # GUI
@@ -158,6 +182,15 @@ def process_gui_queue():
     root.after(20, process_gui_queue)
 
 
+
+# ============================================================
+# Inviare trigger tramite porta parallela
+# ============================================================
+#def send_trigger(value):
+    #ParalPort.setData(int(value))
+    #time.sleep(0.005)   # 5 ms pulse
+    #ParalPort.setData(0)
+
 # ============================================================
 # SERIALE
 # ============================================================
@@ -167,6 +200,75 @@ def open_serial(PORT, BAUDRATE):
     time.sleep(1)
     ser.reset_input_buffer()
     return ser
+
+# ============================================================
+# Webcam
+# ============================================================
+
+#def start_recording():
+    try:
+        go_pro.shoot_video(0)  # 0 = start recording
+        print("Recording started")
+    except Exception as e:
+        print(f"Error starting recording: {e}")
+
+
+#def stop_recording():
+    try:
+        go_pro.shoot_video(1)  # 1 = stop recording
+        print("Recording stopped")
+    except Exception as e:
+        print(f"Error stopping recording: {e}")
+
+# to rename the video recorded
+#def save_last_video(trial_number):
+    try:
+        media_list = go_pro.getMedia()  # get media list
+        last_video = media_list[-1]     # last recorded file
+
+        new_name = f"trial_{trial_number}.mp4"
+
+        go_pro.downloadLastMedia(custom_filename=new_name)
+        print(f"Saved video as {new_name}")
+
+    except Exception as e:
+        print(f"Error saving video: {e}")
+
+
+# ============================================================
+# GUI INPUT DATI ESPERIMENTO
+# ============================================================
+
+#def get_experiment_info(root):
+    input_window = tk.Toplevel(root)  # ✅ invece di Tk()
+    input_window.title("Dati Esperimento")
+    input_window.geometry("300x250")
+
+    tk.Label(input_window, text="Participant:").pack(pady=5)
+    participant_entry = tk.Entry(input_window)
+    participant_entry.pack()
+
+    tk.Label(input_window, text="Session:").pack(pady=5)
+    session_entry = tk.Entry(input_window)
+    session_entry.pack()
+
+    tk.Label(input_window, text="Condition:").pack(pady=5)
+    condition_entry = tk.Entry(input_window)
+    condition_entry.pack()
+
+    result = {}
+
+    def submit():
+        result["participant"] = participant_entry.get()
+        result["session"] = session_entry.get()
+        result["condition"] = condition_entry.get()
+        input_window.destroy()
+
+    tk.Button(input_window, text="Start", command=submit).pack(pady=20)
+
+    root.wait_window(input_window)  # 🔥 BLOCCA finché non chiudi
+
+    return result
 
 
 # ============================================================
@@ -241,27 +343,36 @@ def startTrial(trial, output_matrix,trial_vec):
 
         if user_input == 'q':
             print('Uscita.')
+            #stop_recording()
             stop_button_thread_func()
             gui_queue.put("CLOSE")
             break
 
         elif user_input == 'a':
             stop_button_thread_func()
+            #start_recording() #questo permetterà di cominciare la registrazione dopo la pressione del tasto "a"
+            
 
             ser.reset_input_buffer()
 
             gui_queue.put("CLEAR_TOUCH_TEXTS")
-            # if trial_vec[trial-1] == 1:       #IF PER AUDIO DIVERSI IN BASE AL VETTORE RANDOMICIZZATO TRIAL_VEC
-            #     play.audio1
-            # elif trial_vec[trial-1] == 2:
-            #     play.audio2
-            # elif trial_vec[trial-1] == 3:
-            #     play.audio3
+
+            #trigger_value = trigger_EEG_vec[trial - 1]
+            #send_trigger(trigger_value)
+
+            #if trial_vec[trial-1] == 1:       #IF PER AUDIO DIVERSI IN BASE AL VETTORE RANDOMICIZZATO TRIAL_VEC
+                #Cued1.play()                    #Il problema del crush sta proprio nella riproduzione dell'audio
+            #elif trial_vec[trial-1] == 2:
+                #Cued2.play()
+            #elif trial_vec[trial-1] == 3:
+               # Cued3.play()
+            #elif trial_vec[trial-1] == 4:  
+                #Cued4.play()
             
             start_time = time.time()
             print('Timer avviato.')
 
-            completeTrial(trial, start_time, output_matrix, trial_vec[trial-1])
+            completeTrial(trial, start_time, output_matrix)
 
             with open(output_file, 'w', newline='') as f:
                 writer = csv.writer(f)
@@ -273,7 +384,8 @@ def startTrial(trial, output_matrix,trial_vec):
 
             start_button_thread()
 
-        elif user_input == 'r':
+        elif user_input == 'r': #discutiamo se tenere questa opzione, perché nelle fisiologiche non puoi sottrare il trial quindi si potrebbe creare un mismatch 
+            #stop_recording()
             trial = resetTrial(output_matrix, trial)
 
             gui_queue.put("CLEAR_TOUCH_TEXTS")
@@ -293,6 +405,19 @@ def resetTrial(output_matrix, trial):
 
 
 def completeTrial(trial, start_time, output_matrix):
+    # ===============================
+    # INFO TRIAL
+    # ===============================
+    output_matrix[trial, 11] = trial
+    output_matrix[trial, 12] = trial_vec[trial-1]
+    output_matrix[trial, 13] = tocco_atteso_S1[trial-1]
+    output_matrix[trial, 14] = tocco_atteso_S2[trial-1]
+    output_matrix[trial, 18] = Participant
+    output_matrix[trial, 19] = Session
+    output_matrix[trial, 20] = Condition
+
+    
+
     line = ''
     lines = []
 
@@ -365,8 +490,28 @@ def completeTrial(trial, start_time, output_matrix):
 
     parseOutputs(lines, output_matrix, trial)
 
+    #stop_recording() #interrompe la registrazione
+    #time.sleep(1) #serve veramente
+    #save_last_video(trial) #salva il video
+
+
     output_matrix[trial, 5] = np.abs(output_matrix[trial, 3] - output_matrix[trial, 4])
     output_matrix[trial, 8] = np.abs(output_matrix[trial, 6] - output_matrix[trial, 7])
+
+    if output_matrix[trial, 9] == tocco_atteso_S1[trial-1]:
+        output_matrix[trial, 15] = 1
+    else:
+        output_matrix[trial, 15] = 0
+
+    if output_matrix[trial, 10] == tocco_atteso_S2[trial-1]:
+        output_matrix[trial, 16] = 1
+    else:
+        output_matrix[trial, 16] = 0   
+    
+    if output_matrix[trial, 15] ==  output_matrix[trial, 16]:
+        output_matrix[trial, 17] = 1
+    else:
+        output_matrix[trial, 17] = 0
 
 
 def parseOutputs(lines, output_matrix, trial):
@@ -390,14 +535,21 @@ def parseOutputs(lines, output_matrix, trial):
     output_matrix[trial, 2] = np.abs(TempoMovimentoSub1 - TempoMovimentoSub2)
 
 
+
+
 # ============================================================
 # MAIN
 # ============================================================
+# Creare un vettore trial per i 4 livelli di Cued (Giu{2}-Su{1}, Su{1}-Giu{2}, Giu{2}-Giu{2}, Su{1}-Su{1})
+#per ogni livello, dovremmo creare dei vettori di tocco atteso codificati come 1 & 2 per calcolare accuratezza soggetto singolo e accurateza di coppia
 
 block = 1
 trials = 160
-trial_vec=np.zeros(trials,dtype=int)
-conditions=[1,2,3,4] #conditions: free, opposite, same, lead12
+trial_vec = np.zeros(trials,dtype=int)
+trigger_EEG_vec = np.zeros(trials,dtype=int)
+conditions=[1,2,3,4] #conditions: Cued1[Giu{2}-Su{1}], Cued2[Su{1}-Giu{2}], Cued3[Giu{2}-Giu{2}], Cued4[Su{1}-Su{1}]
+tocco_atteso_S1 = np.zeros(trials,dtype=int)
+tocco_atteso_S2 = np.zeros(trials,dtype=int)
 
 for i in range(0,trials):
     if i < trials/4:
@@ -410,13 +562,45 @@ for i in range(0,trials):
         trial_vec[i]=conditions[3]
 
 # randomicizzazione trial_vec
-trial_vec=np.random.shuffle(trial_vec)
-audio1= ...
-audio2= ...
+np.random.shuffle(trial_vec)
 
-output_file = f"C:\Users\feder\Documents\GitHub\Bottigliette\provaBottigliette\output_python_temp_{block}.csv"
+#creazione dei vettori tocco atteso per 
+for i in range(0, trials):
+    if trial_vec[i] == 1:
+        tocco_atteso_S1[i] = 2 
+        tocco_atteso_S2[i] = 1
+    elif trial_vec[i] == 2:
+        tocco_atteso_S1[i] = 1 
+        tocco_atteso_S2[i] = 2
+    elif trial_vec[i] == 3:
+        tocco_atteso_S1[i] = 2 
+        tocco_atteso_S2[i] = 2
+    elif trial_vec[i] == 4:
+        tocco_atteso_S1[i] = 1 
+        tocco_atteso_S2[i] = 1
 
-output_matrix = np.zeros((200, 11), dtype=object)
+#creazione del vettore trigger EEG
+for i in range(0, trials):
+    if trial_vec[i] == 1:
+        trigger_EEG_vec[i] = 11 #numeri al momento casuali, dispari perché l'ampli li preferisce
+    elif trial_vec[i] == 2:
+        trigger_EEG_vec[i] = 13
+    elif trial_vec[i] == 3:
+        trigger_EEG_vec[i] = 15
+    elif trial_vec[i] == 4:
+        trigger_EEG_vec[i] = 17
+
+
+#otteniamo info sperimentali da salvare nella matrice finale
+#exp_info = get_experiment_info(root)
+
+#Participant = exp_info["participant"]
+#Session = exp_info["session"]
+#Condition = exp_info["condition"]
+
+output_file = f"X:/Vanessa_{Participant}_{Session}_{Condition}.csv"
+
+output_matrix = np.zeros((trials, 21), dtype=object) #14 colonne
 
 output_matrix[0, :] = [
     'Tempo Movimento SUB 1',
@@ -429,8 +613,21 @@ output_matrix[0, :] = [
     'Stop SUB 2',
     'Asincronia Grasp',
     'Tocco Effettivo SUB1',
-    'Tocco Effettivo SUB2'
+    'Tocco Effettivo SUB2',
+    'numero di trials',
+    'condizione', 
+    'Tocco Atteso SUB1',  
+    'Tocco Atteso SUB2',  
+    'Accuratezza SUB1',
+    'Accuratezza SUB2',
+    'Accuratezza Coppia',
+    'Participant',
+    'Session',
+    'Condition'
 ]
+
+#porte parallele
+
 
 trial = 1
 
@@ -440,7 +637,7 @@ start_button_thread()
 
 trial_thread = threading.Thread(
     target=startTrial,
-    args=(trial, output_matrix),
+    args=(trial, output_matrix, trial_vec),
     daemon=True
 )
 
