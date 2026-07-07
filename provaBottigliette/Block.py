@@ -6,6 +6,7 @@ import tkinter as tk
 import threading
 import queue
 import winsound #proviamo questa libreria (nativa windows) per rirpodurre audio
+from pathlib import Path
 #import simpleaudio as sa
 #from goprocam import GoProCamera
 #import parallel
@@ -52,10 +53,7 @@ Condition = ""
 # Cued2 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
 # Cued3 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
 # Cued4 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
-Cued1 = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
-Cued2 = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
-Cued3 = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
-Cued4 = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
+
 # ============================================================
 # GUI
 # ============================================================
@@ -343,7 +341,7 @@ def stop_button_thread_func():
 # TRIAL
 # ============================================================
 
-def startTrial(trial, output_matrix,trial_vec):
+def startTrial(trial, output_matrix,trial_vec,output_file):
     while True:
         user_input = input("Premi 'a' per avviare il trial, 'r' per resettare, 'q' per uscire: ")
 
@@ -381,7 +379,7 @@ def startTrial(trial, output_matrix,trial_vec):
                                     #senza mai inserire time.sleep().
             print('Timer avviato.')
 
-            completeTrial(trial, start_time, output_matrix)
+            completeTrial(trial, trial_vec, start_time, output_matrix)
 
             with open(output_file, 'w', newline='') as f:
                 writer = csv.writer(f)
@@ -415,7 +413,7 @@ def resetTrial(output_matrix, trial):
     return trial
 
 
-def completeTrial(trial, start_time, output_matrix):
+def completeTrial(trial, trial_vec, start_time, output_matrix):
     # ===============================
     # INFO TRIAL
     # ===============================
@@ -553,107 +551,108 @@ def parseOutputs(lines, output_matrix, trial):
 # ============================================================
 # Creare un vettore trial per i 4 livelli di Cued (Giu{2}-Su{1}, Su{1}-Giu{2}, Giu{2}-Giu{2}, Su{1}-Su{1})
 #per ogni livello, dovremmo creare dei vettori di tocco atteso codificati come 1 & 2 per calcolare accuratezza soggetto singolo e accurateza di coppia
+def StartBlock(participant, block, condition, condition_order,output_path):
+    if condition_order is None:
+       
+        nTrials = 60
+        trial_vec=np.ones(nTrials,dtype=int)
+        conditions=[1,2] #conditions: Ugua/Oppo for Free and Cued; Up/Down for leader-follower.
 
-block = 1
-trials = 4
-trial_vec = np.zeros(trials,dtype=int)
-trigger_EEG_vec = np.zeros(trials,dtype=int)
-conditions=[1,2,3,4] #conditions: Cued1[Giu{2}-Su{1}], Cued2[Su{1}-Giu{2}], Cued3[Giu{2}-Giu{2}], Cued4[Su{1}-Su{1}]
-tocco_atteso_S1 = np.zeros(trials,dtype=int)
-tocco_atteso_S2 = np.zeros(trials,dtype=int)
+        for i in range(0,nTrials):
+            if i < nTrials/2:
+                trial_vec[i]=conditions[1]
 
-for i in range(0,trials): #DA RICONTROLLARE BENE PERCHE POTREBBERO VARIARE UN Pò
-    if i < trials/4:
-        trial_vec[i]=conditions[0]
-    elif i < 2*trials/4 and i >= trials/4:
-        trial_vec[i]=conditions[1]
-    elif i < 3*trials/4 and i >= 2*trials/4:
-        trial_vec[i]=conditions[2]
-    elif i < trials and i >= 3*trials/4:
-        trial_vec[i]=conditions[3]
+        # randomicizzazione trial_vec
+        trial_vec=np.random.shuffle(trial_vec)
+        
+        UP = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
+        DOWN = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
+        OPPO = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
+        UGUA = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
 
-# randomicizzazione trial_vec
-np.random.shuffle(trial_vec)
+        output_file = f"{output_path}\\{condition}_{block}.csv"
 
-#creazione dei vettori tocco atteso per 
-for i in range(0, trials):
-    if trial_vec[i] == 1:
-        tocco_atteso_S1[i] = 2 
-        tocco_atteso_S2[i] = 1
-    elif trial_vec[i] == 2:
-        tocco_atteso_S1[i] = 1 
-        tocco_atteso_S2[i] = 2
-    elif trial_vec[i] == 3:
-        tocco_atteso_S1[i] = 2 
-        tocco_atteso_S2[i] = 2
-    elif trial_vec[i] == 4:
-        tocco_atteso_S1[i] = 1 
-        tocco_atteso_S2[i] = 1
+        output_matrix = np.zeros((200, 11), dtype=object)
 
-#creazione del vettore trigger EEG
-for i in range(0, trials):
-    if trial_vec[i] == 1:
-        trigger_EEG_vec[i] = 11 #numeri al momento casuali, dispari perché l'ampli li preferisce #Fede: COOOSA?!
-    elif trial_vec[i] == 2:
-        trigger_EEG_vec[i] = 13
-    elif trial_vec[i] == 3:
-        trigger_EEG_vec[i] = 15
-    elif trial_vec[i] == 4:
-        trigger_EEG_vec[i] = 17
+        output_matrix[0, :] = [
+            'Tempo Movimento SUB 1',
+            'Tempo Movimento SUB 2',
+            'Asincronia Tempo Movimento',
+            'Start SUB1',
+            'Start SUB2',
+            'Asincronia Start',
+            'Stop SUB 1',
+            'Stop SUB 2',
+            'Asincronia Grasp',
+            'Tocco Effettivo SUB1',
+            'Tocco Effettivo SUB2'
+        ]
 
+        trial = 1
 
-#otteniamo info sperimentali da salvare nella matrice finale
-exp_info = get_experiment_info(root)
+        ser = open_serial(PORT, BAUDRATE)
 
-Participant = exp_info["participant"]
-Session = exp_info["session"]
-Condition = exp_info["condition"]
+        start_button_thread()
 
-output_file = f"C:/Users/piero/Desktop/{Participant}_{Session}_{Condition}.csv"
+        trial_thread = threading.Thread(
+            target=startTrial,
+            args=(nTrials,trial, output_matrix,output_file,trial_vec),
+            daemon=True
+        )
 
-output_matrix = np.zeros((trials+1, 21), dtype=object) #14 colonne
+        trial_thread.start()
 
-output_matrix[0, :] = [
-    'Tempo Movimento SUB 1',
-    'Tempo Movimento SUB 2',
-    'Asincronia Tempo Movimento',
-    'Start SUB1',
-    'Start SUB2',
-    'Asincronia Start',
-    'Stop SUB 1',
-    'Stop SUB 2',
-    'Asincronia Stop',
-    'Tocco Effettivo SUB1',
-    'Tocco Effettivo SUB2',
-    'numero di trials',
-    'sotto-condizione', 
-    'Tocco Atteso SUB1',  
-    'Tocco Atteso SUB2',  
-    'Accuratezza SUB1',
-    'Accuratezza SUB2',
-    'Accuratezza Coppia',
-    'Participant',
-    'Session',
-    'Condition'
-] #Aggiungere il save dei trigger EEG
+        process_gui_queue()
+    
+    block = 1
+    nTrials = 60
+    trial_vec=np.ones(nTrials,dtype=int)
+    conditions=[1,2] #conditions: Ugua/Oppo for Free and Cued; Up/Down for leader-follower.
 
-#porte parallele
+    for i in range(0,nTrials):
+        if i < nTrials/2:
+            trial_vec[i]=conditions[1]
 
+    # randomicizzazione trial_vec
+    trial_vec=np.random.shuffle(trial_vec)
+    
+    UP = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
+    DOWN = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
+    OPPO = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
+    UGUA = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
 
-trial = 1
+    output_file = f"{output_path}\\{condition}_{block}.csv"
 
-ser = open_serial(PORT, BAUDRATE)
+    output_matrix = np.zeros((200, 11), dtype=object)
 
-start_button_thread()
+    output_matrix[0, :] = [
+        'Tempo Movimento SUB 1',
+        'Tempo Movimento SUB 2',
+        'Asincronia Tempo Movimento',
+        'Start SUB1',
+        'Start SUB2',
+        'Asincronia Start',
+        'Stop SUB 1',
+        'Stop SUB 2',
+        'Asincronia Grasp',
+        'Tocco Effettivo SUB1',
+        'Tocco Effettivo SUB2'
+    ]
 
-trial_thread = threading.Thread(
-    target=startTrial,
-    args=(trial, output_matrix, trial_vec),
-    daemon=True
-)
+    trial = 1
 
-trial_thread.start()
+    ser = open_serial(PORT, BAUDRATE)
 
-process_gui_queue()
+    start_button_thread()
+
+    trial_thread = threading.Thread(
+        target=startTrial,
+        args=(nTrials,trial, output_matrix,output_file,trial_vec),
+        daemon=True
+    )
+
+    trial_thread.start()
+
+    process_gui_queue()
 
 root.mainloop()
