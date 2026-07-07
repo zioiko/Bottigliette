@@ -365,7 +365,7 @@ def startTrial(trial, output_matrix,trial_vec):
 
             trigger_value = trigger_EEG_vec[trial - 1]
             #send_trigger(trigger_value)   # invece di mandare trigger con la sua funzione con time.sleep farei:  
-            # ParalPort.setData(trigger_value)  # manda trigger   
+            # ParalPort.setData(trigger_value)  # manda trigger  (da switchare con l'audio ma bisogna farne un check) 
             if trial_vec[trial-1] == 1:       #IF PER AUDIO DIVERSI IN BASE AL VETTORE RANDOMICIZZATO TRIAL_VEC
                 winsound.PlaySound(Cued1, winsound.SND_FILENAME | winsound.SND_ASYNC)
             elif trial_vec[trial-1] == 2:
