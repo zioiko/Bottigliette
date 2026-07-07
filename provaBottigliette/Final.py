@@ -52,10 +52,10 @@ Condition = ""
 # Cued2 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
 # Cued3 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
 # Cued4 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
-Cued1 = ("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
-Cued2 = ("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
-Cued3 = ("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
-Cued4 = ("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
+Cued1 = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
+Cued2 = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
+Cued3 = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
+Cued4 = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
 # ============================================================
 # GUI
 # ============================================================
@@ -245,7 +245,7 @@ def open_serial(PORT, BAUDRATE):
 # GUI INPUT DATI ESPERIMENTO
 # ============================================================
 
-#def get_experiment_info(root):
+def get_experiment_info(root):
     input_window = tk.Toplevel(root)  # ✅ invece di Tk()
     input_window.title("Dati Esperimento")
     input_window.geometry("300x250")
@@ -419,7 +419,7 @@ def completeTrial(trial, start_time, output_matrix):
     # ===============================
     # INFO TRIAL
     # ===============================
-    output_matrix[trial, 11] = trial
+    output_matrix[trial, 11] = trial #forse da reimpostare
     output_matrix[trial, 12] = trial_vec[trial-1]
     output_matrix[trial, 13] = tocco_atteso_S1[trial-1]
     output_matrix[trial, 14] = tocco_atteso_S2[trial-1]
@@ -519,7 +519,7 @@ def completeTrial(trial, start_time, output_matrix):
     else:
         output_matrix[trial, 16] = 0   
     
-    if output_matrix[trial, 15] ==  output_matrix[trial, 16]:
+    if output_matrix[trial, 15] & output_matrix[trial, 16] == 1:
         output_matrix[trial, 17] = 1
     else:
         output_matrix[trial, 17] = 0
@@ -555,7 +555,7 @@ def parseOutputs(lines, output_matrix, trial):
 #per ogni livello, dovremmo creare dei vettori di tocco atteso codificati come 1 & 2 per calcolare accuratezza soggetto singolo e accurateza di coppia
 
 block = 1
-trials = 160
+trials = 4
 trial_vec = np.zeros(trials,dtype=int)
 trigger_EEG_vec = np.zeros(trials,dtype=int)
 conditions=[1,2,3,4] #conditions: Cued1[Giu{2}-Su{1}], Cued2[Su{1}-Giu{2}], Cued3[Giu{2}-Giu{2}], Cued4[Su{1}-Su{1}]
@@ -603,15 +603,15 @@ for i in range(0, trials):
 
 
 #otteniamo info sperimentali da salvare nella matrice finale
-#exp_info = get_experiment_info(root)
+exp_info = get_experiment_info(root)
 
-#Participant = exp_info["participant"]
-#Session = exp_info["session"]
-#Condition = exp_info["condition"]
+Participant = exp_info["participant"]
+Session = exp_info["session"]
+Condition = exp_info["condition"]
 
-output_file = f"X:/Vanessa_{Participant}_{Session}_{Condition}.csv"
+output_file = f"C:/Users/piero/Desktop/{Participant}_{Session}_{Condition}.csv"
 
-output_matrix = np.zeros((trials, 21), dtype=object) #14 colonne
+output_matrix = np.zeros((trials+1, 21), dtype=object) #14 colonne
 
 output_matrix[0, :] = [
     'Tempo Movimento SUB 1',
@@ -622,11 +622,11 @@ output_matrix[0, :] = [
     'Asincronia Start',
     'Stop SUB 1',
     'Stop SUB 2',
-    'Asincronia Grasp',
+    'Asincronia Stop',
     'Tocco Effettivo SUB1',
     'Tocco Effettivo SUB2',
     'numero di trials',
-    'condizione', 
+    'sotto-condizione', 
     'Tocco Atteso SUB1',  
     'Tocco Atteso SUB2',  
     'Accuratezza SUB1',
@@ -635,7 +635,7 @@ output_matrix[0, :] = [
     'Participant',
     'Session',
     'Condition'
-]
+] #Aggiungere il save dei trigger EEG
 
 #porte parallele
 
