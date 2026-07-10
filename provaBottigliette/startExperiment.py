@@ -11,7 +11,16 @@ block = None
 condition = None
 condition_order = None
 
-CONDITIONS = ["FREE/OPPOSITE","FREE/SAME","LEAD1/SAME","LEAD1/OPPOSITE","LEAD2/SAME","LEAD2/OPPOSITE","CUED/SAME","CUED/OPPOSITE"]
+CONDITIONS = [
+    "FREE/OPPOSITE",
+    "FREE/SAME",
+    "LEAD1/SAME",
+    "LEAD1/OPPOSITE",
+    "LEAD2/SAME",
+    "LEAD2/OPPOSITE",
+    "CUED/SAME",
+    "CUED/OPPOSITE"
+]
 
 
 def toggle_condition_menu():
@@ -78,12 +87,13 @@ def show_confirmation_window(
         text="Are the entered data correct?",
         font=("Arial", 11, "bold")
     ).pack(pady=(0, 15))
+
     if temp_condition_order is None:
         data_text = (
             f"Participant: {temp_participant}\n"
             f"Block: {temp_block}\n"
             f"Condition: {temp_condition}"
-            )
+        )
 
     if temp_condition_order is not None:
         data_text = (
@@ -136,7 +146,6 @@ def save_data(
     condition_order = temp_condition_order
 
     confirmation_window.destroy()
-    root.destroy()
 
     print("Saved variables:")
     print("participant =", participant)
@@ -146,7 +155,14 @@ def save_data(
     if condition_order is not None:
         print("condition_order =", condition_order)
 
-    Block.StartBlock(participant,block,condition,condition_order,output_path)
+    Block.StartBlock(
+        participant,
+        block,
+        condition,
+        condition_order,
+        output_path,
+        master=root
+    )
 
 
 # Creazione finestra principale

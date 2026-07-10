@@ -5,24 +5,14 @@ import csv
 import tkinter as tk
 import threading
 import queue
-import winsound #proviamo questa libreria (nativa windows) per rirpodurre audio
+import winsound
 from pathlib import Path
-#import simpleaudio as sa
-#from goprocam import GoProCamera
-#import parallel
 
 # ===========================================================
 # Parallel Port
 # ===========================================================
-#ParalPort = parallel.Parallel() #se non funziona aggiungere l'address; esempio: address=0x378
-#ParalPort.setData(0)
-
-
-# ===========================================================
-# Creo Webcam
-# ===========================================================
-
-#go_pro = GoProCamera.GoPro() # Da vedere bene
+# ParalPort = parallel.Parallel()
+# ParalPort.setData(0)
 
 # ============================================================
 # PARAMETRI
@@ -30,8 +20,6 @@ from pathlib import Path
 
 PORT = 'COM3'
 BAUDRATE = 9600
-
-
 
 # ============================================================
 # VARIABILI GLOBALI
@@ -48,73 +36,80 @@ Participant = ""
 Session = ""
 Condition = ""
 
-#aggiungi audio condizione specifica (2 x 2)
-# Cued1 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
-# Cued2 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
-# Cued3 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
-# Cued4 = sa.WaveObject.from_wave_file("C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
+root = None
+left_panel = None
+right_panel = None
+left_touch_label = None
+right_touch_label = None
+left_label = None
+right_label = None
+
 
 # ============================================================
 # GUI
 # ============================================================
 
-root = tk.Tk()
-root.title("Stato pulsanti")
-root.geometry("800x400")
+def create_status_window(master):
+    global root
+    global left_panel, right_panel
+    global left_touch_label, right_touch_label
+    global left_label, right_label
 
-left_panel = tk.Frame(root, bg="red")
-right_panel = tk.Frame(root, bg="red")
+    root = tk.Toplevel(master)
+    root.title("Stato pulsanti")
+    root.geometry("800x400")
 
-left_panel.pack(side="left", fill="both", expand=True)
-right_panel.pack(side="right", fill="both", expand=True)
+    left_panel = tk.Frame(root, bg="red")
+    right_panel = tk.Frame(root, bg="red")
 
+    left_panel.pack(side="left", fill="both", expand=True)
+    right_panel.pack(side="right", fill="both", expand=True)
 
-# ----------------------------
-# PANNELLO SINISTRO - SUB 1
-# ----------------------------
+    # ----------------------------
+    # PANNELLO SINISTRO - SUB 1
+    # ----------------------------
 
-left_touch_label = tk.Label(
-    left_panel,
-    text="",
-    font=("Arial", 30, "bold"),
-    bg="red",
-    fg="white"
-)
+    left_touch_label = tk.Label(
+        left_panel,
+        text="",
+        font=("Arial", 30, "bold"),
+        bg="red",
+        fg="white"
+    )
 
-left_label = tk.Label(
-    left_panel,
-    text="SUB 1",
-    font=("Arial", 40),
-    bg="red",
-    fg="white"
-)
+    left_label = tk.Label(
+        left_panel,
+        text="SUB 1",
+        font=("Arial", 40),
+        bg="red",
+        fg="white"
+    )
 
-left_touch_label.pack(side="top", pady=30)
-left_label.pack(expand=True)
+    left_touch_label.pack(side="top", pady=30)
+    left_label.pack(expand=True)
 
+    # ----------------------------
+    # PANNELLO DESTRO - SUB 2
+    # ----------------------------
 
-# ----------------------------
-# PANNELLO DESTRO - SUB 2
-# ----------------------------
+    right_touch_label = tk.Label(
+        right_panel,
+        text="",
+        font=("Arial", 30, "bold"),
+        bg="red",
+        fg="white"
+    )
 
-right_touch_label = tk.Label(
-    right_panel,
-    text="",
-    font=("Arial", 30, "bold"),
-    bg="red",
-    fg="white"
-)
+    right_label = tk.Label(
+        right_panel,
+        text="SUB 2",
+        font=("Arial", 40),
+        bg="red",
+        fg="white"
+    )
 
-right_label = tk.Label(
-    right_panel,
-    text="SUB 2",
-    font=("Arial", 40),
-    bg="red",
-    fg="white"
-)
-
-right_touch_label.pack(side="top", pady=30)
-right_label.pack(expand=True)
+    right_touch_label.pack(side="top", pady=30)
+    right_label.pack(expand=True)
 
 
 def set_left_color(color):
@@ -184,17 +179,6 @@ def process_gui_queue():
     root.after(20, process_gui_queue)
 
 
-
-# ============================================================
-# Inviare trigger tramite porta parallela
-# ============================================================
-#def send_trigger(value):
-    #ParalPort.setData(int(value))
-    #time.sleep(0.005)   # 5 ms pulse #**ATTENZIONE**: Così fermi per 5 ms tutto lo script, anche il tempo che vai a registrare con starttime.time()
-                            #piuttosto ci conviene mandare il trigger con ParalPort.setData(value) e poi, qualche riga dopo (così che l'ECG "veda" il trigger)
-                            # ParalPort.setData(0) senza sleep, così non blocchiamo tutto il programma.
-    #ParalPort.setData(0)
-
 # ============================================================
 # SERIALE
 # ============================================================
@@ -205,46 +189,13 @@ def open_serial(PORT, BAUDRATE):
     ser.reset_input_buffer()
     return ser
 
-# ============================================================
-# Webcam
-# ============================================================
-
-#def start_recording():
-    try:
-        go_pro.shoot_video(0)  # 0 = start recording
-        print("Recording started")
-    except Exception as e:
-        print(f"Error starting recording: {e}")
-
-
-#def stop_recording():
-    try:
-        go_pro.shoot_video(1)  # 1 = stop recording
-        print("Recording stopped")
-    except Exception as e:
-        print(f"Error stopping recording: {e}")
-
-# to rename the video recorded
-#def save_last_video(trial_number):
-    try:
-        media_list = go_pro.getMedia()  # get media list
-        last_video = media_list[-1]     # last recorded file
-
-        new_name = f"trial_{trial_number}.mp4"
-
-        go_pro.downloadLastMedia(custom_filename=new_name)
-        print(f"Saved video as {new_name}")
-
-    except Exception as e:
-        print(f"Error saving video: {e}")
-
 
 # ============================================================
 # GUI INPUT DATI ESPERIMENTO
 # ============================================================
 
 def get_experiment_info(root):
-    input_window = tk.Toplevel(root)  # ✅ invece di Tk()
+    input_window = tk.Toplevel(root)
     input_window.title("Dati Esperimento")
     input_window.geometry("300x250")
 
@@ -270,7 +221,7 @@ def get_experiment_info(root):
 
     tk.Button(input_window, text="Start", command=submit).pack(pady=20)
 
-    root.wait_window(input_window)  # 🔥 BLOCCA finché non chiudi
+    root.wait_window(input_window)
 
     return result
 
@@ -341,42 +292,32 @@ def stop_button_thread_func():
 # TRIAL
 # ============================================================
 
-def startTrial(trial, output_matrix,trial_vec,output_file):
+def startTrial(nTrials, trial, output_matrix, output_file, trial_vec_s1, trial_vec_s2):
     while True:
         user_input = input("Premi 'a' per avviare il trial, 'r' per resettare, 'q' per uscire: ")
 
         if user_input == 'q':
             print('Uscita.')
-            #stop_recording()
             stop_button_thread_func()
             gui_queue.put("CLOSE")
             break
 
         elif user_input == 'a':
             stop_button_thread_func()
-            #start_recording() #questo permetterà di cominciare la registrazione dopo la pressione del tasto "a"
-            
 
             ser.reset_input_buffer()
 
             gui_queue.put("CLEAR_TOUCH_TEXTS")
+            #SOLO PER PROVA
+            t0=time.time() #provare a mettere ParalPort = parallel.Parallel()
 
-            trigger_value = trigger_EEG_vec[trial - 1]
-            #send_trigger(trigger_value)   # invece di mandare trigger con la sua funzione con time.sleep farei:  
-            # ParalPort.setData(trigger_value)  # manda trigger  (da switchare con l'audio ma bisogna farne un check) 
-            if trial_vec[trial-1] == 1:       #IF PER AUDIO DIVERSI IN BASE AL VETTORE RANDOMICIZZATO TRIAL_VEC
-                winsound.PlaySound(Cued1, winsound.SND_FILENAME | winsound.SND_ASYNC)
-            elif trial_vec[trial-1] == 2:
-                winsound.PlaySound(Cued2, winsound.SND_FILENAME | winsound.SND_ASYNC)
-            elif trial_vec[trial-1] == 3:
-                winsound.PlaySound(Cued3, winsound.SND_FILENAME | winsound.SND_ASYNC)
-            elif trial_vec[trial-1] == 4:  
-                winsound.PlaySound(Cued4, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            winsound.PlaySound(trial_vec_s1[trial - 1], winsound.SND_FILENAME | winsound.SND_ASYNC)
+            winsound.PlaySound(trial_vec_s2[trial - 1], winsound.SND_FILENAME | winsound.SND_ASYNC)
+            t1=time.time() #provare a mettere # ParalPort.setData(0)
+            print(f"Tempo esecuzione: {t1-t0:.3f} secondi")
 
             start_time = time.time()
-            #ParalPort.setData(0)  # reset trigger subito dopo senza sleep, così non blocchiamo tutto il programma.
-                                    #il pc dovrebbe leggere una linea in 1 o 0.5 ms. Possiamo fare diverse prove ma raccomanderei questa modalità per mandare trigger
-                                    #senza mai inserire time.sleep().
+
             print('Timer avviato.')
 
             completeTrial(trial, trial_vec, start_time, output_matrix)
@@ -388,13 +329,14 @@ def startTrial(trial, output_matrix,trial_vec,output_file):
             print(f'Trial {trial} salvato.')
 
             trial = trial + 1
+            if trial > nTrials - 1:
+                print('Blocco completato')
+                gui_queue.put("CLOSE")
+                break
 
             start_button_thread()
 
-        elif user_input == 'r': #discutiamo se tenere questa opzione, perché nelle fisiologiche non puoi sottrare il trial quindi si potrebbe creare un mismatch
-                                #qui è facile. in post-processing cerchi quante volte compare uno stesso trigger (dato che sono numerati in base al trial specifico (trial_vec))
-                                # e poi ti prendi solo l'ultimo trial sulle fisiologiche. 
-            #stop_recording()
+        elif user_input == 'r':
             trial = resetTrial(output_matrix, trial)
 
             gui_queue.put("CLEAR_TOUCH_TEXTS")
@@ -403,7 +345,7 @@ def startTrial(trial, output_matrix,trial_vec,output_file):
 
 
 def resetTrial(output_matrix, trial):
-    output_matrix[trial, 0:11] = 0
+    output_matrix[trial, 0:20] = 0
 
     trial = trial - 1
 
@@ -417,15 +359,13 @@ def completeTrial(trial, trial_vec, start_time, output_matrix):
     # ===============================
     # INFO TRIAL
     # ===============================
-    output_matrix[trial, 11] = trial #forse da reimpostare
-    output_matrix[trial, 12] = trial_vec[trial-1]
-    output_matrix[trial, 13] = tocco_atteso_S1[trial-1]
-    output_matrix[trial, 14] = tocco_atteso_S2[trial-1]
+    output_matrix[trial, 11] = trial
+    output_matrix[trial, 12] = trial_vec[trial - 1]
+    output_matrix[trial, 13] = tocco_atteso_S1[trial - 1]
+    output_matrix[trial, 14] = tocco_atteso_S2[trial - 1]
     output_matrix[trial, 18] = Participant
     output_matrix[trial, 19] = Session
     output_matrix[trial, 20] = Condition
-
-    
 
     line = ''
     lines = []
@@ -499,24 +439,19 @@ def completeTrial(trial, trial_vec, start_time, output_matrix):
 
     parseOutputs(lines, output_matrix, trial)
 
-    #stop_recording() #interrompe la registrazione
-    #time.sleep(1) #serve veramente #Perchè???
-    #save_last_video(trial) #salva il video
-
-
     output_matrix[trial, 5] = np.abs(output_matrix[trial, 3] - output_matrix[trial, 4])
     output_matrix[trial, 8] = np.abs(output_matrix[trial, 6] - output_matrix[trial, 7])
 
-    if output_matrix[trial, 9] == tocco_atteso_S1[trial-1]:
+    if output_matrix[trial, 9] == tocco_atteso_S1[trial - 1]:
         output_matrix[trial, 15] = 1
     else:
         output_matrix[trial, 15] = 0
 
-    if output_matrix[trial, 10] == tocco_atteso_S2[trial-1]:
+    if output_matrix[trial, 10] == tocco_atteso_S2[trial - 1]:
         output_matrix[trial, 16] = 1
     else:
-        output_matrix[trial, 16] = 0   
-    
+        output_matrix[trial, 16] = 0
+
     if output_matrix[trial, 15] & output_matrix[trial, 16] == 1:
         output_matrix[trial, 17] = 1
     else:
@@ -544,35 +479,112 @@ def parseOutputs(lines, output_matrix, trial):
     output_matrix[trial, 2] = np.abs(TempoMovimentoSub1 - TempoMovimentoSub2)
 
 
+def createBlock(condition, trial_vec, nTrials):
+    UP = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav"
+    DOWN = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav"
+    OPPO = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav"
+    UGUA = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav"
+    UP-SAME
+    UP-OPPO
+    if condition == "FREE/OPPOSITE":
+        for i in range(0, nTrials):
+            trial_vec[i] = OPPO
+        trial_vec_s1 = trial_vec.copy()
+        trial_vec_s2 = trial_vec.copy()
+
+    elif condition == "FREE/SAME":
+        for i in range(0, nTrials):
+            trial_vec[i] = UGUA
+        trial_vec_s1 = trial_vec.copy()
+        trial_vec_s2 = trial_vec.copy()
+
+    elif condition == "LEAD1/SAME":
+        for i in range(0, nTrials):
+            if i < nTrials / 2:
+                trial_vec[i] = UP
+            else:
+                trial_vec[i] = DOWN
+        np.random.shuffle(trial_vec)
+        trial_vec_s1 = trial_vec.copy()
+        for i in range(0, nTrials):
+            trial_vec[i] = UGUA
+        trial_vec_s2 = trial_vec.copy()
+
+    elif condition == "LEAD1/OPPOSITE":
+        for i in range(0, nTrials):
+            if i < nTrials / 2:
+                trial_vec[i] = UP
+            else:
+                trial_vec[i] = DOWN
+        np.random.shuffle(trial_vec)
+        trial_vec_s1 = trial_vec.copy()
+        for i in range(0, nTrials):
+            trial_vec[i] = OPPO
+        trial_vec_s2 = trial_vec.copy()
+
+    elif condition == "LEAD2/SAME":
+        for i in range(0, nTrials):
+            if i < nTrials / 2:
+                trial_vec[i] = UP
+            else:
+                trial_vec[i] = DOWN
+        np.random.shuffle(trial_vec)
+        trial_vec_s2 = trial_vec.copy()
+        for i in range(0, nTrials):
+            trial_vec[i] = UGUA
+        trial_vec_s1 = trial_vec.copy()
+
+    elif condition == "LEAD2/OPPOSITE":
+        for i in range(0, nTrials):
+            if i < nTrials / 2:
+                trial_vec[i] = UP
+            else:
+                trial_vec[i] = DOWN
+        np.random.shuffle(trial_vec)
+        trial_vec_s2 = trial_vec.copy()
+        for i in range(0, nTrials):
+            trial_vec[i] = OPPO
+        trial_vec_s1 = trial_vec.copy()
+
+    elif condition == "CUED/SAME":
+        for i in range(0, nTrials):
+            trial_vec[i] = UGUA
+        trial_vec_s1 = trial_vec.copy()
+        trial_vec_s2 = trial_vec.copy()
+
+    elif condition == "CUED/OPPOSITE":
+        for i in range(0, nTrials):
+            trial_vec[i] = OPPO
+        trial_vec_s1 = trial_vec.copy()
+        trial_vec_s2 = trial_vec.copy()
+
+    return trial_vec_s1, trial_vec_s2
 
 
 # ============================================================
 # MAIN
 # ============================================================
-# Creare un vettore trial per i 4 livelli di Cued (Giu{2}-Su{1}, Su{1}-Giu{2}, Giu{2}-Giu{2}, Su{1}-Su{1})
-#per ogni livello, dovremmo creare dei vettori di tocco atteso codificati come 1 & 2 per calcolare accuratezza soggetto singolo e accurateza di coppia
-def StartBlock(participant, block, condition, condition_order,output_path):
+
+def StartBlock(participant, block, condition, condition_order, output_path, master):
+    global ser
+    global Participant, Session, Condition
+
+    Participant = participant
+    Session = block
+    Condition = condition
+
+    create_status_window(master)
+
     if condition_order is None:
-       
+
         nTrials = 60
-        trial_vec=np.ones(nTrials,dtype=int)
-        conditions=[1,2] #conditions: Ugua/Oppo for Free and Cued; Up/Down for leader-follower.
+        trial_vec = np.empty(nTrials, dtype=object)
 
-        for i in range(0,nTrials):
-            if i < nTrials/2:
-                trial_vec[i]=conditions[1]
+        trial_vec_s1, trial_vec_s2 = createBlock(condition, trial_vec, nTrials)
 
-        # randomicizzazione trial_vec
-        trial_vec=np.random.shuffle(trial_vec)
-        
-        UP = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
-        DOWN = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
-        OPPO = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
-        UGUA = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
+        output_file = f"{output_path}\\{participant}\\{condition}_{block}.csv"
 
-        output_file = f"{output_path}\\{condition}_{block}.csv"
-
-        output_matrix = np.zeros((200, 11), dtype=object)
+        output_matrix = np.zeros((nTrials + 1, 11), dtype=object)
 
         output_matrix[0, :] = [
             'Tempo Movimento SUB 1',
@@ -596,63 +608,10 @@ def StartBlock(participant, block, condition, condition_order,output_path):
 
         trial_thread = threading.Thread(
             target=startTrial,
-            args=(nTrials,trial, output_matrix,output_file,trial_vec),
+            args=(nTrials, trial, output_matrix, output_file, trial_vec_s1, trial_vec_s2),
             daemon=True
         )
 
         trial_thread.start()
 
         process_gui_queue()
-    
-    block = 1
-    nTrials = 60
-    trial_vec=np.ones(nTrials,dtype=int)
-    conditions=[1,2] #conditions: Ugua/Oppo for Free and Cued; Up/Down for leader-follower.
-
-    for i in range(0,nTrials):
-        if i < nTrials/2:
-            trial_vec[i]=conditions[1]
-
-    # randomicizzazione trial_vec
-    trial_vec=np.random.shuffle(trial_vec)
-    
-    UP = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav")
-    DOWN = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav")
-    OPPO = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav")
-    UGUA = ("C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav")
-
-    output_file = f"{output_path}\\{condition}_{block}.csv"
-
-    output_matrix = np.zeros((200, 11), dtype=object)
-
-    output_matrix[0, :] = [
-        'Tempo Movimento SUB 1',
-        'Tempo Movimento SUB 2',
-        'Asincronia Tempo Movimento',
-        'Start SUB1',
-        'Start SUB2',
-        'Asincronia Start',
-        'Stop SUB 1',
-        'Stop SUB 2',
-        'Asincronia Grasp',
-        'Tocco Effettivo SUB1',
-        'Tocco Effettivo SUB2'
-    ]
-
-    trial = 1
-
-    ser = open_serial(PORT, BAUDRATE)
-
-    start_button_thread()
-
-    trial_thread = threading.Thread(
-        target=startTrial,
-        args=(nTrials,trial, output_matrix,output_file,trial_vec),
-        daemon=True
-    )
-
-    trial_thread.start()
-
-    process_gui_queue()
-
-root.mainloop()
