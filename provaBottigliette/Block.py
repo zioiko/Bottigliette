@@ -7,12 +7,13 @@ import threading
 import queue
 import winsound
 from pathlib import Path
+#import parallel
 
 # ===========================================================
 # Parallel Port
 # ===========================================================
-# ParalPort = parallel.Parallel()
-# ParalPort.setData(0)
+#ParalPort = parallel.Parallel()
+#ParalPort.setData(0)
 
 # ============================================================
 # PARAMETRI
@@ -111,6 +112,13 @@ def create_status_window(master):
     right_touch_label.pack(side="top", pady=30)
     right_label.pack(expand=True)
 
+# ---------------------------------
+# PANNELLO ASINCRONIA
+# ---------------------------------
+
+    #global asincronia_label
+    #asincronia_label = tk.Label(master, text="Asincronia Grasp: ---", font=("Arial", 16))
+    #asincronia_label.pack(pady=10)
 
 def set_left_color(color):
     left_panel.config(bg=color)
@@ -175,6 +183,9 @@ def process_gui_queue():
         elif command == "CLOSE":
             root.destroy()
             return
+        
+        #elif isinstance(msg, tuple) and msg[0] == "UPDATE_ASINCRONIA":
+            #asincronia_label.config(text=f"Asincronia Grasp: {msg[1]}")   
 
     root.after(20, process_gui_queue)
 
@@ -292,7 +303,8 @@ def stop_button_thread_func():
 # TRIAL
 # ============================================================
 
-def startTrial(nTrials, trial, output_matrix, output_file, trial_vec_s1, trial_vec_s2):
+def startTrial(nTrials, trial, output_matrix, output_file, 
+               trial_vec, tocco_atteso_S1, tocco_atteso_S2, trigger_list, Participant, Session, Condition):
     while True:
         user_input = input("Premi 'a' per avviare il trial, 'r' per resettare, 'q' per uscire: ")
 
@@ -308,19 +320,37 @@ def startTrial(nTrials, trial, output_matrix, output_file, trial_vec_s1, trial_v
             ser.reset_input_buffer()
 
             gui_queue.put("CLEAR_TOUCH_TEXTS")
-            #SOLO PER PROVA
-            t0=time.time() #provare a mettere ParalPort = parallel.Parallel()
+            #gui_queue.put(("UPDATE_ASINCRONIA", "---"))
 
-            winsound.PlaySound(trial_vec_s1[trial - 1], winsound.SND_FILENAME | winsound.SND_ASYNC)
-            winsound.PlaySound(trial_vec_s2[trial - 1], winsound.SND_FILENAME | winsound.SND_ASYNC)
-            t1=time.time() #provare a mettere # ParalPort.setData(0)
-            print(f"Tempo esecuzione: {t1-t0:.3f} secondi")
+            #provare a mettere ParalPort = parallel.Parallel()
+            #provare a mettere # ParalPort.setData(trigger_list[trial-1])
+            #time.sleep(0.01)
+            # trigger OFF
+            #ParalPort.setData(0)
 
-            start_time = time.time()
+            winsound.PlaySound(trial_vec[trial - 1], winsound.SND_FILENAME | winsound.SND_ASYNC)
+
+
+            start_time = time.time() #comincia a contare il parallelo al suono?
+            
+
+
+
+            
 
             print('Timer avviato.')
 
-            completeTrial(trial, trial_vec, start_time, output_matrix)
+            completeTrial( trial,
+                    trial_vec,
+                    start_time,
+                    output_matrix,
+                    tocco_atteso_S1,
+                    tocco_atteso_S2,
+                    trigger_list, Participant, Session, Condition)
+            
+            #asincronia = output_matrix[trial, 8]  # colonna Asincronia Grasp
+            #gui_queue.put(("UPDATE_ASINCRONIA", asincronia))
+
 
             with open(output_file, 'w', newline='') as f:
                 writer = csv.writer(f)
@@ -329,7 +359,7 @@ def startTrial(nTrials, trial, output_matrix, output_file, trial_vec_s1, trial_v
             print(f'Trial {trial} salvato.')
 
             trial = trial + 1
-            if trial > nTrials - 1:
+            if trial > nTrials:
                 print('Blocco completato')
                 gui_queue.put("CLOSE")
                 break
@@ -355,7 +385,13 @@ def resetTrial(output_matrix, trial):
     return trial
 
 
-def completeTrial(trial, trial_vec, start_time, output_matrix):
+def completeTrial(trial,
+    trial_vec,
+    start_time,
+    output_matrix,
+    tocco_atteso_S1,
+    tocco_atteso_S2,
+    trigger_list, Participant, Session, Condition):
     # ===============================
     # INFO TRIAL
     # ===============================
@@ -366,6 +402,7 @@ def completeTrial(trial, trial_vec, start_time, output_matrix):
     output_matrix[trial, 18] = Participant
     output_matrix[trial, 19] = Session
     output_matrix[trial, 20] = Condition
+    output_matrix[trial, 21] = trigger_list[trial - 1]
 
     line = ''
     lines = []
@@ -479,86 +516,192 @@ def parseOutputs(lines, output_matrix, trial):
     output_matrix[trial, 2] = np.abs(TempoMovimentoSub1 - TempoMovimentoSub2)
 
 
-def createBlock(condition, trial_vec, nTrials):
-    UP = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Up.wav"
-    DOWN = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Down.wav"
-    OPPO = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Oppo.wav"
-    UGUA = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/Ugua.wav"
-    UP-SAME
-    UP-OPPO
+def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2, trigger_list):
+    UP_UP = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-su.wav"
+    UP_DOWN = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-giu.wav"
+    DOWN_DOWN = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-giu.wav"
+    DOWN_UP = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-su.wav"
+    OPPO_OPPO = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-oppo.wav"
+    SAME_SAME = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/ugua-ugua.wav"
+    UP_OPPO = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-ugua.wav"
+    UP_SAME = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-oppo.wav"
+    DOWN_OPPO = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-oppo.wav"
+    DOWN_SAME = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-ugua.wav"
+    OPPO_UP = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-su.wav"
+    OPPO_DOWN = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-giu.wav"
+    SAME_UP = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/ugua-su.wav"
+    SAME_DOWN = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/ugua-giu.wav"
+
+    
     if condition == "FREE/OPPOSITE":
+        lista_vec = []
         for i in range(0, nTrials):
-            trial_vec[i] = OPPO
-        trial_vec_s1 = trial_vec.copy()
-        trial_vec_s2 = trial_vec.copy()
+            lista_vec.append(
+                (OPPO_OPPO,
+                 None,
+                 None, 
+                 1))
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            
 
     elif condition == "FREE/SAME":
+        lista_vec = []
         for i in range(0, nTrials):
-            trial_vec[i] = UGUA
-        trial_vec_s1 = trial_vec.copy()
-        trial_vec_s2 = trial_vec.copy()
+            lista_vec.append(
+                (SAME_SAME,
+                 None,
+                 None, 
+                 2))
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            
+
 
     elif condition == "LEAD1/SAME":
+        lista_vec = []
         for i in range(0, nTrials):
             if i < nTrials / 2:
-                trial_vec[i] = UP
+                lista_vec.append(
+                    (UP_SAME,
+                    1,
+                    None, 
+                    3))
             else:
-                trial_vec[i] = DOWN
-        np.random.shuffle(trial_vec)
-        trial_vec_s1 = trial_vec.copy()
-        for i in range(0, nTrials):
-            trial_vec[i] = UGUA
-        trial_vec_s2 = trial_vec.copy()
+                lista_vec.append(
+                    (DOWN_SAME,
+                    2,
+                    None, 
+                    4))
+        np.random.shuffle(lista_vec)
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            
 
     elif condition == "LEAD1/OPPOSITE":
+        lista_vec = []
         for i in range(0, nTrials):
             if i < nTrials / 2:
-                trial_vec[i] = UP
+                lista_vec.append(
+                    (UP_OPPO,
+                    1,
+                    None, 
+                    5))
             else:
-                trial_vec[i] = DOWN
-        np.random.shuffle(trial_vec)
-        trial_vec_s1 = trial_vec.copy()
-        for i in range(0, nTrials):
-            trial_vec[i] = OPPO
-        trial_vec_s2 = trial_vec.copy()
+                lista_vec.append(
+                    (DOWN_OPPO,
+                    2,
+                    None, 
+                    6))
+        np.random.shuffle(lista_vec)
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            
 
     elif condition == "LEAD2/SAME":
+        lista_vec = []
         for i in range(0, nTrials):
             if i < nTrials / 2:
-                trial_vec[i] = UP
+                lista_vec.append(
+                    (SAME_UP,
+                    None,
+                    1, 
+                    7))
             else:
-                trial_vec[i] = DOWN
-        np.random.shuffle(trial_vec)
-        trial_vec_s2 = trial_vec.copy()
-        for i in range(0, nTrials):
-            trial_vec[i] = UGUA
-        trial_vec_s1 = trial_vec.copy()
+                lista_vec.append(
+                    (SAME_DOWN,
+                    None,
+                    2, 
+                    8))
+        np.random.shuffle(lista_vec)
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            
 
     elif condition == "LEAD2/OPPOSITE":
+        lista_vec = []
         for i in range(0, nTrials):
             if i < nTrials / 2:
-                trial_vec[i] = UP
+                lista_vec.append(
+                    (OPPO_UP,
+                    None,
+                    1, 
+                    9))
             else:
-                trial_vec[i] = DOWN
-        np.random.shuffle(trial_vec)
-        trial_vec_s2 = trial_vec.copy()
-        for i in range(0, nTrials):
-            trial_vec[i] = OPPO
-        trial_vec_s1 = trial_vec.copy()
-
+                lista_vec.append(
+                    (OPPO_DOWN,
+                    None,
+                    2, 
+                    10))
+        np.random.shuffle(lista_vec)
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            
     elif condition == "CUED/SAME":
+        lista_vec = []
         for i in range(0, nTrials):
-            trial_vec[i] = UGUA
-        trial_vec_s1 = trial_vec.copy()
-        trial_vec_s2 = trial_vec.copy()
+            if i < nTrials / 2:
+                lista_vec.append(
+                    (UP_UP,
+                    1,
+                    1, 
+                    11))
+            else:
+                lista_vec.append(
+                    (DOWN_DOWN,
+                    2,
+                    2, 
+                    12))
+        np.random.shuffle(lista_vec)
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            
 
     elif condition == "CUED/OPPOSITE":
+        lista_vec = []
         for i in range(0, nTrials):
-            trial_vec[i] = OPPO
-        trial_vec_s1 = trial_vec.copy()
-        trial_vec_s2 = trial_vec.copy()
+            if i < nTrials / 2:
+                lista_vec.append(
+                    (UP_DOWN,
+                    1,
+                    2, 
+                    13))
+            else:
+                lista_vec.append(
+                    (DOWN_UP,
+                    2,
+                    1, 
+                    14))
+        np.random.shuffle(lista_vec)
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            
 
-    return trial_vec_s1, trial_vec_s2
+    return 
 
 
 # ============================================================
@@ -579,25 +722,42 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
 
         nTrials = 60
         trial_vec = np.empty(nTrials, dtype=object)
+        tocco_atteso_S1 = np.empty(nTrials, dtype=object)
+        tocco_atteso_S2 = np.empty(nTrials, dtype=object)
+        trigger_list = np.empty(nTrials, dtype=object)
+        
 
-        trial_vec_s1, trial_vec_s2 = createBlock(condition, trial_vec, nTrials)
+        createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2,trigger_list)
 
-        output_file = f"{output_path}\\{participant}\\{condition}_{block}.csv"
 
-        output_matrix = np.zeros((nTrials + 1, 11), dtype=object)
+        safe_condition = condition.replace("/", "_")
+        output_file = f"{output_path}/{participant}_{safe_condition}_{block}.csv"
+
+        output_matrix = np.zeros((nTrials + 1, 22), dtype=object)
 
         output_matrix[0, :] = [
-            'Tempo Movimento SUB 1',
-            'Tempo Movimento SUB 2',
-            'Asincronia Tempo Movimento',
-            'Start SUB1',
-            'Start SUB2',
-            'Asincronia Start',
-            'Stop SUB 1',
-            'Stop SUB 2',
-            'Asincronia Grasp',
-            'Tocco Effettivo SUB1',
-            'Tocco Effettivo SUB2'
+            'Tempo Movimento SUB 1', #1
+            'Tempo Movimento SUB 2', #2
+            'Asincronia Tempo Movimento', #3
+            'Start SUB1', #4
+            'Start SUB2', #5
+            'Asincronia Start', #6
+            'Stop SUB 1', #7
+            'Stop SUB 2', #8
+            'Asincronia Grasp', #9
+            'Tocco Effettivo SUB1', #10
+            'Tocco Effettivo SUB2', #11
+            'numero di trials', #12
+            'Sub-conditions', #13 
+            'Tocco Atteso SUB1', #14
+            'Tocco Atteso SUB2', #15
+            'Accuratezza SUB1', #16
+            'Accuratezza SUB2', #17
+            'Accuratezza Coppia', #18
+            'Participant', #19
+            'Session', #20
+            'Condition', #21
+            'triggers' #22
         ]
 
         trial = 1
@@ -608,7 +768,16 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
 
         trial_thread = threading.Thread(
             target=startTrial,
-            args=(nTrials, trial, output_matrix, output_file, trial_vec_s1, trial_vec_s2),
+            args=(
+                nTrials,
+                trial,
+                output_matrix,
+                output_file,
+                trial_vec,
+                tocco_atteso_S1,
+                tocco_atteso_S2,
+                trigger_list, Participant, Session, Condition
+            ),
             daemon=True
         )
 
