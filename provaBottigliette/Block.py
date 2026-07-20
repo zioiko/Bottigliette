@@ -45,6 +45,9 @@ right_touch_label = None
 left_label = None
 right_label = None
 
+# Label utilizzata per mostrare l'asincronia grasp
+asincronia_label = None
+
 
 # ============================================================
 # GUI
@@ -55,6 +58,7 @@ def create_status_window(master):
     global left_panel, right_panel
     global left_touch_label, right_touch_label
     global left_label, right_label
+    global asincronia_label
 
     root = tk.Toplevel(master)
     root.title("Stato pulsanti")
@@ -120,6 +124,25 @@ def create_status_window(master):
     #asincronia_label = tk.Label(master, text="Asincronia Grasp: ---", font=("Arial", 16))
     #asincronia_label.pack(pady=10)
 
+    asincronia_label = tk.Label(
+        root,
+        text="",
+        font=("Arial", 24, "bold"),
+        bg="black",
+        fg="white",
+        padx=20,
+        pady=8
+    )
+
+    asincronia_label.place(
+        relx=0.5,
+        rely=0.75,
+        anchor="center"
+    )
+
+    asincronia_label.lift()
+
+
 def set_left_color(color):
     left_panel.config(bg=color)
     left_label.config(bg=color)
@@ -145,9 +168,27 @@ def clear_touch_texts():
     right_touch_label.config(text="")
 
 
+def set_asincronia_grasp(value):
+    asincronia_label.config(
+        text=f"Asincronia Grasp: {value} ms"
+    )
+
+    asincronia_label.lift()
+
+
+def clear_asincronia_grasp():
+    asincronia_label.config(text="")
+
+
 def process_gui_queue():
     while not gui_queue.empty():
         command = gui_queue.get()
+
+        if isinstance(command, tuple):
+            if command[0] == "UPDATE_ASINCRONIA":
+                set_asincronia_grasp(command[1])
+
+            continue
 
         if command == "SUB1_GREEN":
             set_left_color("green")
@@ -175,6 +216,9 @@ def process_gui_queue():
 
         elif command == "CLEAR_TOUCH_TEXTS":
             clear_touch_texts()
+
+        elif command == "CLEAR_ASINCRONIA":
+            clear_asincronia_grasp()
 
         elif command == "BOTH_RED":
             set_left_color("red")
@@ -320,6 +364,7 @@ def startTrial(nTrials, trial, output_matrix, output_file,
             ser.reset_input_buffer()
 
             gui_queue.put("CLEAR_TOUCH_TEXTS")
+            gui_queue.put("CLEAR_ASINCRONIA")
             #gui_queue.put(("UPDATE_ASINCRONIA", "---"))
 
             #provare a mettere ParalPort = parallel.Parallel()
@@ -340,13 +385,18 @@ def startTrial(nTrials, trial, output_matrix, output_file,
 
             print('Timer avviato.')
 
-            completeTrial( trial,
-                    trial_vec,
-                    start_time,
-                    output_matrix,
-                    tocco_atteso_S1,
-                    tocco_atteso_S2,
-                    trigger_list, Participant, Session, Condition)
+            completeTrial(
+                trial,
+                trial_vec,
+                start_time,
+                output_matrix,
+                tocco_atteso_S1,
+                tocco_atteso_S2,
+                trigger_list,
+                Participant,
+                Session,
+                Condition
+            )
             
             #asincronia = output_matrix[trial, 8]  # colonna Asincronia Grasp
             #gui_queue.put(("UPDATE_ASINCRONIA", asincronia))
@@ -385,13 +435,18 @@ def resetTrial(output_matrix, trial):
     return trial
 
 
-def completeTrial(trial,
+def completeTrial(
+    trial,
     trial_vec,
     start_time,
     output_matrix,
     tocco_atteso_S1,
     tocco_atteso_S2,
-    trigger_list, Participant, Session, Condition):
+    trigger_list,
+    Participant,
+    Session,
+    Condition
+):
     # ===============================
     # INFO TRIAL
     # ===============================
@@ -478,6 +533,10 @@ def completeTrial(trial,
 
     output_matrix[trial, 5] = np.abs(output_matrix[trial, 3] - output_matrix[trial, 4])
     output_matrix[trial, 8] = np.abs(output_matrix[trial, 6] - output_matrix[trial, 7])
+
+    gui_queue.put(
+        ("UPDATE_ASINCRONIA", int(output_matrix[trial, 8]))
+    )
 
     if output_matrix[trial, 9] == tocco_atteso_S1[trial - 1]:
         output_matrix[trial, 15] = 1
@@ -776,7 +835,10 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
                 trial_vec,
                 tocco_atteso_S1,
                 tocco_atteso_S2,
-                trigger_list, Participant, Session, Condition
+                trigger_list,
+                Participant,
+                Session,
+                Condition
             ),
             daemon=True
         )
