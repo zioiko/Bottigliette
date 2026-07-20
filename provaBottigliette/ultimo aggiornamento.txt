@@ -1,0 +1,3 @@
+fixare total time: viene scritto nella seconda riga di output perché lo script inizia a raccogliere i dati quando scrive "time difference between grasps", il che avviene prima di total time. Capire se in arduino creare una variabile per cui si identifica la fine trial.
+
+lo script di esecuzione dell'esperimento salverà alcuni dati attraverso time.time, mentre lo script di comunicazine con arduino ne salverà altri (sempre con time.time, per avere un tempo comune)
