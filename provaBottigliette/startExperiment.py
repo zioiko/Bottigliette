@@ -1,9 +1,14 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from tkinter import filedialog #per fare browising dell'output_path
 import random
 import Block
 
-output_path = "C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Output"
+#cosa fa lo script
+#input-ouput
+#autori
+
+output_path = "" #aggiungere il BROWSE sulla GUI inziale
 
 # Variabili finali salvate
 participant = None
@@ -22,6 +27,14 @@ CONDITIONS = [
     "CUED/OPPOSITE"
 ]
 
+
+def browse_output_path():
+    global output_path
+    folder_selected = filedialog.askdirectory()
+
+    if folder_selected:
+        output_path = folder_selected
+        output_path_label.config(text=output_path)
 
 def toggle_condition_menu():
     if shuffle_var.get():
@@ -208,9 +221,18 @@ shuffle_checkbox = ttk.Checkbutton(
 )
 shuffle_checkbox.grid(row=3, column=0, columnspan=2, sticky="w", pady=10)
 
+# Selezione Output Path
+ttk.Label(main_frame, text="Output Folder").grid(row=4, column=0, sticky="w", pady=5)
+
+browse_button = ttk.Button(main_frame, text="Browse", command=browse_output_path)
+browse_button.grid(row=4, column=1, pady=5, sticky="w")
+
+output_path_label = ttk.Label(main_frame, text="No folder selected", foreground="gray")
+output_path_label.grid(row=5, column=0, columnspan=2, sticky="w")
+
 # Pulsante conferma
 submit_button = ttk.Button(main_frame, text="Confirm", command=submit)
-submit_button.grid(row=4, column=0, columnspan=2, pady=20)
+submit_button.grid(row=6, column=0, columnspan=2, pady=20)
 
 participant_entry.focus()
 
