@@ -54,7 +54,7 @@ from pathlib import Path
 # PARAMETRI
 # ============================================================
 
-PORT = 'COM3'
+#PORT = 'COM8'
 BAUDRATE = 9600
 
 # ============================================================
@@ -151,9 +151,15 @@ def create_status_window(master):
 # PANNELLO ASINCRONIA
 # ---------------------------------
 
-    #global asincronia_label
-    #asincronia_label = tk.Label(master, text="Asincronia Grasp: ---", font=("Arial", 16))
-    #asincronia_label.pack(pady=10)
+    global asincronia_label
+    asincronia_label = tk.Label(
+        root,
+        text="Asincronia Grasp: ---",
+        font=("Arial", 20, "bold"),
+        bg="white",
+        fg="black"
+    )
+    asincronia_label.pack(side="bottom", pady=10)
 
 def set_left_color(color):
     left_panel.config(bg=color)
@@ -219,8 +225,8 @@ def process_gui_queue():
             root.destroy()
             return
         
-        #elif isinstance(msg, tuple) and msg[0] == "UPDATE_ASINCRONIA":
-            #asincronia_label.config(text=f"Asincronia Grasp: {msg[1]}")   
+        elif isinstance(command, tuple) and command[0] == "UPDATE_ASINCRONIA":
+            asincronia_label.config(text=f"Asincronia Grasp: {command[1]} ms")
 
     root.after(20, process_gui_queue)
 
@@ -431,7 +437,7 @@ def completeTrial(trial,
     # INFO TRIAL
     # ===============================
     output_matrix[trial, 11] = trial
-    output_matrix[trial, 12] = trial_vec[trial - 1]
+    output_matrix[trial, 12] = Path(trial_vec[trial - 1]).stem
     output_matrix[trial, 13] = tocco_atteso_S1[trial - 1]
     output_matrix[trial, 14] = tocco_atteso_S2[trial - 1]
     output_matrix[trial, 18] = Participant
@@ -514,6 +520,8 @@ def completeTrial(trial,
     output_matrix[trial, 5] = np.abs(output_matrix[trial, 3] - output_matrix[trial, 4])
     output_matrix[trial, 8] = np.abs(output_matrix[trial, 6] - output_matrix[trial, 7])
 
+    gui_queue.put(("UPDATE_ASINCRONIA", output_matrix[trial, 8]))
+
     if output_matrix[trial, 9] == tocco_atteso_S1[trial - 1]:
         output_matrix[trial, 15] = 1
     else:
@@ -552,20 +560,20 @@ def parseOutputs(lines, output_matrix, trial):
 
 
 def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2, trigger_list):
-    UP_UP = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-su.wav"
-    UP_DOWN = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-giu.wav"
-    DOWN_DOWN = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-giu.wav"
-    DOWN_UP = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-su.wav"
-    OPPO_OPPO = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-oppo.wav"
-    SAME_SAME = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/ugua-ugua.wav"
-    UP_OPPO = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-ugua.wav"
-    UP_SAME = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-oppo.wav"
-    DOWN_OPPO = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-oppo.wav"
-    DOWN_SAME = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-ugua.wav"
-    OPPO_UP = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-su.wav"
-    OPPO_DOWN = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-giu.wav"
-    SAME_UP = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/ugua-su.wav"
-    SAME_DOWN = r"C:/Users/piero/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/ugua-giu.wav"
+    UP_UP = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-su.wav"
+    UP_DOWN = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-giu.wav"
+    DOWN_DOWN = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-giu.wav"
+    DOWN_UP = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-su.wav"
+    OPPO_OPPO = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-oppo.wav"
+    SAME_SAME = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/ugua-ugua.wav"
+    UP_OPPO = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-ugua.wav"
+    UP_SAME = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/su-oppo.wav"
+    DOWN_OPPO = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-oppo.wav"
+    DOWN_SAME = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/giu-ugua.wav"
+    OPPO_UP = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-su.wav"
+    OPPO_DOWN = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/oppo-giu.wav"
+    SAME_UP = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette/Stimoli/ugua-su.wav"
+    SAME_DOWN = r"C:/Users/feder/Documents/GitHub/Bottigliette/provaBottigliette\Stimoli/ugua-giu.wav"
 
     
     if condition == "FREE/OPPOSITE":
@@ -735,7 +743,7 @@ def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2,
             tocco_atteso_S2[i] = trial[2]
             trigger_list[i] = trial[3]
             
-
+    
     return 
 
 
@@ -743,14 +751,14 @@ def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2,
 # MAIN
 # ============================================================
 
-def StartBlock(participant, block, condition, condition_order, output_path, master):
+def StartBlock(participant, block, condition, condition_order, output_path, master,com_port):
     global ser
     global Participant, Session, Condition
 
     Participant = participant
     Session = block
     Condition = condition
-
+    
     create_status_window(master)
 
     if condition_order is None:
@@ -797,7 +805,7 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
 
         trial = 1
 
-        ser = open_serial(PORT, BAUDRATE)
+        ser = open_serial(com_port, BAUDRATE)
 
         start_button_thread()
 
