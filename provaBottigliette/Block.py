@@ -42,13 +42,21 @@ import threading
 import queue
 import winsound
 from pathlib import Path
-#import parallel
+import trgenpy as tp
+
 
 # ===========================================================
 # Parallel Port
 # ===========================================================
 #ParalPort = parallel.Parallel()
 #ParalPort.setData(0)
+
+# ============================================================
+client = tp.TrgenClient()
+client.connect()
+isAavailable = client.is_available()
+# ============================================================
+
 
 # ============================================================
 # PARAMETRI
@@ -346,6 +354,8 @@ def stop_button_thread_func():
 
 def startTrial(nTrials, trial, output_matrix, output_file, 
                trial_vec, tocco_atteso_S1, tocco_atteso_S2, trigger_list, Participant, Session, Condition):
+    client.sendMarker(markerNS=trigger_list[trial],autoStart=False)
+    
     while True:
         user_input = input("Premi 'a' per avviare il trial, 'r' per resettare, 'q' per uscire: ")
 
@@ -370,7 +380,8 @@ def startTrial(nTrials, trial, output_matrix, output_file,
             #ParalPort.setData(0)
 
             winsound.PlaySound(trial_vec[trial - 1], winsound.SND_FILENAME | winsound.SND_ASYNC)
-
+            client.start()
+            print("trigger inviato " + str(trigger_list[trial]))
 
             start_time = time.time() #comincia a contare in parallelo al suono? Si, si discosta di nanosecondi (check eseguito)
             
