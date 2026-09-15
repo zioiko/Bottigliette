@@ -350,8 +350,9 @@ def unique_video_name(out_dir, name, ext=".mp4"):
 def startTrial(nTrials, trial, output_matrix, output_file, 
                trial_vec, tocco_atteso_S1, tocco_atteso_S2, trigger_list, Participant, Session, Condition, trigger_offset):
     
-    client.setDefaultDuration(150)
-    client.sendMarker(markerNS= 255, autoStart=False)
+    client.setDefaultDuration(250)
+    #client.sendMarker(markerNS= 56, autoStart=False)
+    client.sendTrigger([tp.TrgenPin.NS7], autoStart=False)
 
     rec.open() #inizializzare la GoPro
 
@@ -384,7 +385,7 @@ def startTrial(nTrials, trial, output_matrix, output_file,
 
                 
                 client.start()
-                print("trigger inviato " + str(trigger_list[trial]))
+                #print("trigger inviato " + str(trigger_list[trial]))
 
                 start_time = time.time() #comincia a contare in parallelo al suono? Si, si discosta di nanosecondi (check eseguito)
                 
