@@ -1,3 +1,37 @@
+#This script interfaces with an Arduino device to extract key behavioral measures from bottle sensors and their corresponding table buttons during a dyadic task.
+#The script generates an output matrix (output_matrix), which is saved as a .csv file and contains the following variables:
+
+#output_matrix[0, :] = [
+        #'Tempo Movimento SUB1': extracted from Arduino; time elapsed from button release to bottle grasp for Subject 1.
+        #'Tempo Movimento SUB2': extracted from Arduino; time elapsed from button release to bottle grasp for Subject 2.
+        #'Asincronia Tempo Movimento': computed in this script as the difference between the two movement times.
+        #'Start SUB1': computed in Python; time elapsed between sound onset and button release for Subject 1.
+        #'Start SUB2': computed in Python; time elapsed between sound onset and button release for Subject 2.
+        #'Asincronia Start': computed in this script as the difference between the two start times.
+        #'Stop SUB1': computed in Python; time elapsed between sound onset and bottle grasp for Subject 1 (shared temporal reference).
+        #'Stop SUB2': computed in Python; time elapsed between sound onset and bottle grasp for Subject 2 (shared temporal reference).
+        #'Asincronia Grasp': computed in this script as the difference between the two stop times (common zero reference).
+        #'Tocco Effettivo SUB1': extracted from Arduino; categorical value (1 = upper sensor, 2 = lower sensor).
+        #'Tocco Effettivo SUB2': extracted from Arduino; categorical value (1 = upper sensor, 2 = lower sensor).
+        #'numero di trials': total number of trials per block; defined by the variable ntrials, which can be adjusted at the end of the script.
+        #'Sub-conditions': defined by the vector trial_vec, specifying whether a trial belongs to a specific sub-condition within a condition (e.g., in cued/opposite conditions: SUB1-down & SUB2-up vs. SUB1-up & SUB2-down).
+        #'Tocco Atteso SUB1': vector of expected responses (values 1 or 2), generated in Python based on the experimental condition and trial list.
+        #'Tocco Atteso SUB2': vector of expected responses (values 1 or 2), generated in Python based on the experimental condition and trial list.
+        #'Accuratezza SUB1': computed by comparing expected and actual touch (1 = correct, 0 = incorrect).
+        #'Accuratezza SUB2': computed by comparing expected and actual touch (1 = correct, 0 = incorrect).
+        #'Accuratezza Coppia': equals 1 if both subjects are correct; equals 0 if both are incorrect or if only one is correct.
+        #'Participant': participant identifier selected at the beginning of the experiment (see startExperiment.py).
+        #'Session': session number.
+        #'Condition': experimental condition corresponding to each trial.
+        #'Triggers': event markers sent to electrophysiological recording devices. These are generated within the createBlock function according to the selected condition and are also saved in the .csv file for verification purposes.
+
+#Notes:
+#Auditory stimuli are generated in stereo (left/right channels), with separate channels assigned to each member of the dyad.
+#Python uses multithreading to simultaneously: (i) read dependent variables from the Arduino, and 
+#                                              (ii) continuously monitor the state of buttons and bottle sensors to provide real-time feedback in the graphical user interface (GUI).
+
+
+
 #import the needed library 
 import time
 import numpy as np
@@ -8,7 +42,6 @@ import threading
 import queue
 import winsound
 from pathlib import Path
-from datetime import datetime
 import trgenpy as tp
 from gopro_webcam_recorder import GoProRecorder
 from time import sleep
@@ -350,7 +383,7 @@ def unique_video_name(out_dir, name, ext=".mp4"):
 def startTrial(nTrials, trial, output_matrix, output_file, 
                trial_vec, tocco_atteso_S1, tocco_atteso_S2, trigger_list, Participant, Session, Condition, trigger_offset):
     
-    
+    client.sendMarker(markerNS=trigger_list[trial],autoStart=False)
 
     rec.open() #inizializzare la GoPro
 
@@ -370,8 +403,6 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                 ser.reset_input_buffer()
 
                 gui_queue.put("CLEAR_TOUCH_TEXTS")
-                client.setDefaultDuration(100)
-                client.sendMarker(markerNS= trigger_list[trial-1],autoStart=False)
 
                 # ---- avvio registrazione video ----
                 video_name = unique_video_name(rec.out_dir,
@@ -381,8 +412,6 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                 trial_time_start = time.time()
 
                 winsound.PlaySound(trial_vec[trial - 1], winsound.SND_FILENAME | winsound.SND_ASYNC)
-
-                
                 client.start()
                 print("trigger inviato " + str(trigger_list[trial]))
 
@@ -396,22 +425,20 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                         output_matrix,
                         tocco_atteso_S1,
                         tocco_atteso_S2,
-                        trigger_list, Participant, Session, Condition)
+                        trigger_list, trigger_offset, Participant, Session, Condition)
 
-                #client.sendMarker(markerNS= 2, autoStart=False)
+                client.sendMarker(markerNS=trigger_offset[trial])
                 trial_time_stop = time.time()
 
-                #client.start()
-
-                # ---- salvataggio orario di inizio/fine trial (clock time, per confronto col video) ----
-                output_matrix[trial, 22] = datetime.fromtimestamp(trial_time_start).strftime('%H:%M:%S.%f')[:-3]
-                output_matrix[trial, 23] = datetime.fromtimestamp(trial_time_stop).strftime('%H:%M:%S.%f')[:-3]
 
                 time.sleep(0.1)
 
                 video_path = rec.stop_recording()
                 print(f"Video salvato: {video_path}")
 
+
+                #asincronia = output_matrix[trial, 8]  # colonna Asincronia Grasp
+                #gui_queue.put(("UPDATE_ASINCRONIA", asincronia))
 
 
                 with open(output_file, 'w', newline='') as f:
@@ -822,7 +849,7 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
 
     if condition_order is None:
 
-        nTrials = 5 #cambia in base al numeor di trials desiderato
+        nTrials = 4 #cambia in base al numeor di trials desiderato
         trial_vec = np.empty(nTrials, dtype=object)
         tocco_atteso_S1 = np.empty(nTrials, dtype=object)
         tocco_atteso_S2 = np.empty(nTrials, dtype=object)
@@ -835,7 +862,7 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
         safe_condition = condition.replace("/", "_") #permette non leggere la condizione come percorso a causa dello slash 
         output_file = f"{output_path}/{participant}_{safe_condition}_{block}.csv"
 
-        output_matrix = np.zeros((nTrials + 1, 24), dtype=object)
+        output_matrix = np.zeros((nTrials + 1, 22), dtype=object)
 
         output_matrix[0, :] = [
             'Tempo Movimento SUB 1', #1
@@ -859,9 +886,7 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
             'Participant', #19
             'Session', #20
             'Condition', #21
-            'triggers', #22
-            'Trial Start (clock time)', #23
-            'Trial Stop (clock time)' #24
+            'triggers' #22
         ]
 
         trial = 1
@@ -880,7 +905,7 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
                 trial_vec,
                 tocco_atteso_S1,
                 tocco_atteso_S2,
-                trigger_list, Participant, Session, Condition, trigger_offset
+                trigger_list,trigger_offset, Participant, Session, Condition
             ),
             daemon=True
         )
