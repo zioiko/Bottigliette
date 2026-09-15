@@ -350,7 +350,8 @@ def unique_video_name(out_dir, name, ext=".mp4"):
 def startTrial(nTrials, trial, output_matrix, output_file, 
                trial_vec, tocco_atteso_S1, tocco_atteso_S2, trigger_list, Participant, Session, Condition, trigger_offset):
     
-    
+    client.setDefaultDuration(150)
+    client.sendMarker(markerNS= 255, autoStart=False)
 
     rec.open() #inizializzare la GoPro
 
@@ -370,8 +371,7 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                 ser.reset_input_buffer()
 
                 gui_queue.put("CLEAR_TOUCH_TEXTS")
-                client.setDefaultDuration(100)
-                client.sendMarker(markerNS= trigger_list[trial-1],autoStart=False)
+
 
                 # ---- avvio registrazione video ----
                 video_name = unique_video_name(rec.out_dir,
