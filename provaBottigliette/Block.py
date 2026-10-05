@@ -385,6 +385,7 @@ def startTrial(nTrials, trial, output_matrix, output_file,
 
                 
                 client.start()
+                #ISTRUZIONE PER PREPARARE TRIGGER PER FINE TRIAL
                 #print("trigger inviato " + str(trigger_list[trial]))
 
                 start_time = time.time() #comincia a contare in parallelo al suono? Si, si discosta di nanosecondi (check eseguito)
@@ -537,7 +538,7 @@ def completeTrial(trial,
         if 'SUB2 Grasped' in line:
             StopSub2 = time.time()
             output_matrix[trial, 7] = int((StopSub2 - start_time) * 1000)
-
+    #CLIENT.START() PER TRIGGER DI FINE TRIAL
     parseOutputs(lines, output_matrix, trial)
 
     output_matrix[trial, 5] = np.abs(output_matrix[trial, 3] - output_matrix[trial, 4])
