@@ -23,6 +23,7 @@ unsigned long graspingTime2;
 unsigned long totalTime2;
 
 // Other variables initialization
+unsigned long startTime;
 unsigned long timeDifference;
 unsigned long timeWin = 0.25; //initialize time window: 250 ms
 int n_outside = 0; // Counter for number of consecutive trials where timeDifference is outside time window
