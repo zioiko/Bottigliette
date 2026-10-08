@@ -23,6 +23,7 @@ unsigned long graspingTime2;
 unsigned long totalTime2;
 
 // Other variables initialization
+unsigned long startTime;
 unsigned long timeDifference;
 unsigned long timeWin = 0.25; //initialize time window: 250 ms
 int n_outside = 0; // Counter for number of consecutive trials where timeDifference is outside time window
@@ -138,11 +139,7 @@ void loop() {
   int touchStateUP2 = digitalRead(touchPinUP2);
   int touchStateDOWN2 = digitalRead(touchPinDOWN2);
 
-  String command = Serial.readString();
-  if (command == "start")
-  {
-    startTime=millis()
-  }
+
 
   // ____________________________________________
   // ----------------FIRST BOTTLE----------------
@@ -164,17 +161,17 @@ void loop() {
   if (touchStateUP1 == HIGH && buttonReleased1 == true && touchUP1 == false) {
     
     graspingTime1 = GetTime1(startTime1);
-    Serial.print("Grasping time UP1:");
+    Serial.println("Grasping time UP1:");
     Serial.println(graspingTime1);
-    Serial.print("SUB1 Grasped:");
-    Serial.println(millis()-startTime)
-    Serial.print("SUB1 UP");
+    Serial.println("SUB1 Grasped:");
+    
+    Serial.println("SUB1 UP");
     touchUP1 = true;
   }
 
   if (buttonState1 == LOW && touchUP1 == true && buttonReleased1 == true) {
     totalTime1 = GetTime1(startTime1);
-    Serial.print("Total time UP1:");
+    Serial.println("Total time UP1:");
     Serial.println(totalTime1);
     touchUP1 = false;
     buttonReleased1 = false;
@@ -186,18 +183,18 @@ void loop() {
 
   if (touchStateDOWN1 == HIGH && buttonReleased1 == true && touchDOWN1 == false) {
     graspingTime1 = GetTime1(startTime1);
-    Serial.print("Grasping time DOWN1:");
+    Serial.println("Grasping time DOWN1:");
     Serial.println(graspingTime1);
-    Serial.print("SUB1 Grasped:");
-    Serial.println(millis()-startTime)
+    Serial.println("SUB1 Grasped:");
+    
     touchDOWN1 = true;
-    Serial.print("SUB1 DOWN");
+    Serial.println("SUB1 DOWN");
 
   }
 
   if (buttonState1 == LOW && touchDOWN1 == true && buttonReleased1 == true) {
     totalTime1 = GetTime1(startTime1);
-    Serial.print("Total time DOWN1:");
+    Serial.println("Total time DOWN1:");
     Serial.println(totalTime1);
     touchDOWN1 = false;
     buttonReleased1 = false;  
@@ -228,18 +225,18 @@ void loop() {
   // Second bottle, up part
   if (touchStateUP2 == HIGH && buttonReleased2 == true && touchUP2 == false) {
     graspingTime2 = GetTime2(startTime2);
-    Serial.print("Grasping time UP2:");
+    Serial.println("Grasping time UP2:");
     Serial.println(graspingTime2);
-    Serial.print("SUB2 Grasped:");
-    Serial.println(millis()-startTime)
-    Serial.print("SUB2 UP");
+    Serial.println("SUB2 Grasped:");
+    
+    Serial.println("SUB2 UP");
 
     touchUP2 = true;
   }
 
   if (buttonState2 == LOW && touchUP2 == true && buttonReleased2 == true) {
     totalTime2 = GetTime2(startTime2);
-    Serial.print("Total time UP2:");
+    Serial.println("Total time UP2:");
     Serial.println(totalTime2);
     touchUP2 = false;
     buttonReleased2 = false;
@@ -251,18 +248,18 @@ void loop() {
 
   if (touchStateDOWN2 == HIGH && buttonReleased2 == true && touchDOWN2 == false) {
     graspingTime2 = GetTime2(startTime2);
-    Serial.print("Grasping time DOWN2:");
+    Serial.println("Grasping time DOWN2:");
     Serial.println(graspingTime2);
-    Serial.print("SUB2 Grasped:");
-    Serial.println(millis()-startTime)
-    Serial.print("SUB2 DOWN");
+    Serial.println("SUB2 Grasped:");
+    
+    Serial.println("SUB2 DOWN");
 
     touchDOWN2 = true;
   }
 
   if (buttonState2 == LOW && touchDOWN2 == true && buttonReleased2 == true) {
     totalTime2 = GetTime2(startTime2);
-    Serial.print("Total time DOWN2:");
+    Serial.println("Total time DOWN2:");
     Serial.println(totalTime2);
     touchDOWN2 = false;
     buttonReleased2 = false;  
@@ -274,7 +271,7 @@ void loop() {
   if (graspingTime1 > 0 && graspingTime2 > 0)
   {
     timeDifference = abs(graspingTime1 - graspingTime2);
-    Serial.print("time difference between grasps:");
+    Serial.println("time difference between grasps:");
     Serial.println(timeDifference);
     isConsecutive(timeDifference,n_outside,n_within,timeWin);
     changeTimeWin(timeDifference,n_outside,n_within,timeWin);
@@ -307,7 +304,7 @@ void loop() {
  }
  if (SUB1returned && SUB2returned)
  {
-  Serial.print("Subjects came back");
+  Serial.println("Subjects came back");
   SUB1returned = false;
   SUB2returned = false;
  }
