@@ -432,11 +432,13 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                                                 build_video_name(Condition, trial))
                 rec.start_recording(video_name)
 
-                trial_time_start = time.time()
+                trial_time_start = time.perf_counter()
+
+                ser.write(b"start")
 
                 winsound.PlaySound(trial_vec[idx], winsound.SND_FILENAME | winsound.SND_ASYNC) #invio dei comandi tramite cuffie ai partecipanti
 
-                start_time = time.time() #tiene il tempo di ogni inizio trial
+                start_time = time.perf_counter() #tiene il tempo di ogni inizio trial (trasformo in millisencods)
                 
                 #time.sleep(1.2)
                 client.start() #invio del trigger 
@@ -456,7 +458,7 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                         tocco_atteso_S2,
                         trigger_list, Participant, Session, Condition)
 
-                trial_time_stop = time.time() #tiene il tempo di ogni fine trial
+                trial_time_stop = time.perf_counter() #tiene il tempo di ogni fine trial
 
                 # ---- salvataggio orario di inizio/fine trial (clock time, per confronto col video) ----
                 output_matrix[trial, 22] = datetime.fromtimestamp(trial_time_start).strftime('%H:%M:%S.%f')[:-3]
@@ -556,16 +558,16 @@ def completeTrial(trial,
 
         if 'Button 1 released' in line:
             gui_queue.put("SUB1_RED")
-            ButtonTimeReleased1 = time.time()
-            output_matrix[trial, 3] = int((ButtonTimeReleased1 - start_time) * 1000)
+            ButtonTimeReleased1 = time.perf_counter()
+            output_matrix[trial, 3] = float((ButtonTimeReleased1 - start_time) * 1000)
 
         if 'Button 2 pressed' in line:
             gui_queue.put("SUB2_GREEN")
 
         if 'Button 2 released' in line:
             gui_queue.put("SUB2_RED")
-            ButtonTimeReleased2 = time.time()
-            output_matrix[trial, 4] = int((ButtonTimeReleased2 - start_time) * 1000)
+            ButtonTimeReleased2 = time.perf_counter()
+            output_matrix[trial, 4] = float((ButtonTimeReleased2 - start_time) * 1000)
 
         # ====================================================
         # SCRITTE TOCCO SU / TOCCO GIU
@@ -592,12 +594,12 @@ def completeTrial(trial,
         # ====================================================
 
         if 'SUB1 Grasped' in line:
-            StopSub1 = time.time()
-            output_matrix[trial, 6] = int((StopSub1 - start_time) * 1000)
+            StopSub1 = time.perf_counter()
+            output_matrix[trial, 6] = float((StopSub1 - start_time))
 
         if 'SUB2 Grasped' in line:
-            StopSub2 = time.time()
-            output_matrix[trial, 7] = int((StopSub2 - start_time) * 1000)
+            StopSub2 = time.perf_counter()
+            output_matrix[trial, 7] = float((StopSub2 - start_time))
 
 
     client.start() #invio trigger offset
@@ -628,9 +630,17 @@ def completeTrial(trial,
 def parseOutputs(lines, output_matrix, trial):
     TempoMovimentoSub1 = 0
     TempoMovimentoSub2 = 0
+    # StopSub1 = 0
+    # StopSub2 = 0
 
     for line in lines:
         output = line.split(':')
+
+        # if 'SUB1 Grasped' in line:
+        #     StopSub1 = float(output[1])
+
+        # if 'SUB2 Grasped' in line:
+        #     StopSub2 = float(output[1])
 
         if len(output) < 2:
             continue
@@ -644,6 +654,9 @@ def parseOutputs(lines, output_matrix, trial):
     output_matrix[trial, 0] = TempoMovimentoSub1
     output_matrix[trial, 1] = TempoMovimentoSub2
     output_matrix[trial, 2] = np.abs(TempoMovimentoSub1 - TempoMovimentoSub2)
+    # output_matrix[trial, 6] = StopSub1
+    # output_matrix[trial, 7] = StopSub2
+    # output_matrix[trial, 8] = np.abs(StopSub1 - StopSub2)
 
 
 def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2, trigger_list, trigger_offset):
@@ -705,14 +718,14 @@ def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2,
                 lista_vec.append(
                     (UP_SAME,
                     1,
-                    None, 
+                    1, 
                     4,
                     14))
             else:
                 lista_vec.append(
                     (DOWN_SAME,
                     2,
-                    None, 
+                    2, 
                     4,
                     14))
         np.random.shuffle(lista_vec)
@@ -731,14 +744,14 @@ def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2,
                 lista_vec.append(
                     (UP_OPPO,
                     1,
-                    None, 
+                    2, 
                     3,
                     13))
             else:
                 lista_vec.append(
                     (DOWN_OPPO,
                     2,
-                    None, 
+                    1, 
                     3,
                     13))
         np.random.shuffle(lista_vec)
@@ -756,14 +769,14 @@ def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2,
             if i < nTrials / 2:
                 lista_vec.append(
                     (SAME_UP,
-                    None,
+                    1,
                     1, 
                     7,
                     17))
             else:
                 lista_vec.append(
                     (SAME_DOWN,
-                    None,
+                    2,
                     2, 
                     7,
                     17))
@@ -782,14 +795,14 @@ def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2,
             if i < nTrials / 2:
                 lista_vec.append(
                     (OPPO_UP,
-                    None,
+                    2,
                     1, 
                     8,
                     18))
             else:
                 lista_vec.append(
                     (OPPO_DOWN,
-                    None,
+                    1,
                     2, 
                     8,
                     18))
@@ -887,7 +900,7 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
 
     if condition_order is None:
 
-        nTrials = 10 #cambia in base al numero di trials desiderato
+        nTrials = 4 #cambia in base al numero di trials desiderato
 
         if nTrials % 2 != 0 and not condition.startswith("FREE"):
             print(f"ATTENZIONE: nTrials = {nTrials} è dispari -> le sotto-condizioni "
