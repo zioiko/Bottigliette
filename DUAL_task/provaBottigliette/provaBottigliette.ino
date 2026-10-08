@@ -138,6 +138,12 @@ void loop() {
   int touchStateUP2 = digitalRead(touchPinUP2);
   int touchStateDOWN2 = digitalRead(touchPinDOWN2);
 
+  String command = Serial.readString();
+  if (command == "start")
+  {
+    startTime=millis()
+  }
+
   // ____________________________________________
   // ----------------FIRST BOTTLE----------------
   // ____________________________________________
@@ -156,10 +162,12 @@ void loop() {
 
   // First bottle, up part
   if (touchStateUP1 == HIGH && buttonReleased1 == true && touchUP1 == false) {
+    
     graspingTime1 = GetTime1(startTime1);
     Serial.print("Grasping time UP1:");
     Serial.println(graspingTime1);
-    Serial.print("SUB1 Grasped");
+    Serial.print("SUB1 Grasped:");
+    Serial.println(millis()-startTime)
     Serial.print("SUB1 UP");
     touchUP1 = true;
   }
@@ -180,7 +188,8 @@ void loop() {
     graspingTime1 = GetTime1(startTime1);
     Serial.print("Grasping time DOWN1:");
     Serial.println(graspingTime1);
-    Serial.print("SUB1 Grasped");
+    Serial.print("SUB1 Grasped:");
+    Serial.println(millis()-startTime)
     touchDOWN1 = true;
     Serial.print("SUB1 DOWN");
 
@@ -221,7 +230,8 @@ void loop() {
     graspingTime2 = GetTime2(startTime2);
     Serial.print("Grasping time UP2:");
     Serial.println(graspingTime2);
-    Serial.print("SUB2 Grasped");
+    Serial.print("SUB2 Grasped:");
+    Serial.println(millis()-startTime)
     Serial.print("SUB2 UP");
 
     touchUP2 = true;
@@ -243,7 +253,8 @@ void loop() {
     graspingTime2 = GetTime2(startTime2);
     Serial.print("Grasping time DOWN2:");
     Serial.println(graspingTime2);
-    Serial.print("SUB2 Grasped");
+    Serial.print("SUB2 Grasped:");
+    Serial.println(millis()-startTime)
     Serial.print("SUB2 DOWN");
 
     touchDOWN2 = true;
