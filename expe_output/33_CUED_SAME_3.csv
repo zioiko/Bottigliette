@@ -1,0 +1,6 @@
+Tempo Movimento SUB 1,Tempo Movimento SUB 2,Asincronia Tempo Movimento,Start SUB1,Start SUB2,Asincronia Start,Stop SUB 1,Stop SUB 2,Asincronia Grasp,Tocco Effettivo SUB1,Tocco Effettivo SUB2,numero di trials,Sub-conditions,Tocco Atteso SUB1,Tocco Atteso SUB2,Accuratezza SUB1,Accuratezza SUB2,Accuratezza Coppia,Participant,Session,Condition,triggers,Trial Start (clock time),Trial Stop (clock time)
+585,648,63,2218,2266,48,2874,2938,64,1,1,1,su-su,1,1,1,1,1,33,3,CUED/SAME,6,13:00:37.901,13:00:42.556
+652,691,39,12502,12534,32,13221,13285,64,1,1,2,giu-giu,2,2,0,0,0,33,3,CUED/SAME,6,13:00:47.511,13:01:01.258
+579,564,15,2227,2243,16,2882,2818,64,1,1,3,su-su,1,1,1,1,1,33,3,CUED/SAME,6,13:01:03.634,13:01:06.776
+2701,2168,533,2471,2423,48,5221,4648,573,2,2,4,giu-giu,2,2,1,1,1,33,3,CUED/SAME,6,13:01:08.396,13:01:13.850
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
