@@ -48,6 +48,7 @@ from datetime import datetime
 import trgenpy as tp
 from gopro_webcam_recorder import GoProRecorder
 from time import sleep
+from stim_audio import StimPlayer
 
 
 # ===========================================================
@@ -57,6 +58,10 @@ client = tp.TrgenClient()
 client.connect()
 isAavailable = client.is_available()
 # ============================================================
+
+
+AUDIO_DEVICE = None   # None = default; set to the WASAPI headphone index from: python stim_audio.py
+
 
 
 # ===========================================================
@@ -106,6 +111,7 @@ left_touch_label = None
 right_touch_label = None
 left_label = None
 right_label = None
+
 
 
 # ============================================================
@@ -404,6 +410,8 @@ def startTrial(nTrials, trial, output_matrix, output_file,
 
 
     rec.open() #inizializzare la GoPro
+    
+    player = StimPlayer(list(trial_vec), device=AUDIO_DEVICE)  # precarica tutti i WAV, stream sempre aperto
 
     try:
         while True:
@@ -434,10 +442,12 @@ def startTrial(nTrials, trial, output_matrix, output_file,
 
                 trial_time_start = time.perf_counter()
 
-                ser.write(b"start")
+                #ser.write(b"start")
 
-                winsound.PlaySound(trial_vec[idx], winsound.SND_FILENAME | winsound.SND_ASYNC) #invio dei comandi tramite cuffie ai partecipanti
-
+                #winsound.PlaySound(trial_vec[idx], winsound.SND_FILENAME | winsound.SND_ASYNC) #invio dei comandi tramite cuffie ai partecipanti
+                player.play(trial_vec[idx])      # avvio audio (già in RAM)
+                player.wait_onset() #attende che il suono sia partito prima di inviare il trigger
+                
                 start_time = time.perf_counter() #tiene il tempo di ogni inizio trial (trasformo in millisencods)
                 
                 #time.sleep(1.2)
@@ -492,6 +502,7 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                 print(f'Trial resettato: si ripete il trial {trial}.')
     finally:
         rec.close()
+        player.close()
 
 def resetTrial(output_matrix, trial):
     """
@@ -611,20 +622,45 @@ def completeTrial(trial,
 
     gui_queue.put(("UPDATE_ASINCRONIA", output_matrix[trial, 8]))
 
-    if output_matrix[trial, 9] == tocco_atteso_S1[idx]:
-        output_matrix[trial, 15] = 1
-    else:
-        output_matrix[trial, 15] = 0
+    # if output_matrix[trial, 9] == tocco_atteso_S1[idx]:
+    #     output_matrix[trial, 15] = 1
+    # else:
+    #     output_matrix[trial, 15] = 0
 
-    if output_matrix[trial, 10] == tocco_atteso_S2[idx]:
-        output_matrix[trial, 16] = 1
-    else:
-        output_matrix[trial, 16] = 0
+    # if output_matrix[trial, 10] == tocco_atteso_S2[idx]:
+    #     output_matrix[trial, 16] = 1
+    # else:
+    #     output_matrix[trial, 16] = 0
 
-    if output_matrix[trial, 15] & output_matrix[trial, 16] == 1:
-        output_matrix[trial, 17] = 1
+    # if output_matrix[trial, 15] & output_matrix[trial, 16] == 1:
+    #     output_matrix[trial, 17] = 1
+    # else:
+    #     output_matrix[trial, 17] = 0
+
+    # ===============================
+    # ACCURATEZZA
+    # ===============================
+    tocco1 = output_matrix[trial, 9]
+    tocco2 = output_matrix[trial, 10]
+    entrambi_toccati = tocco1 in (1, 2) and tocco2 in (1, 2)
+
+    if Condition.startswith("FREE"):
+        # nessun tocco atteso individuale: l'accuratezza è solo di coppia
+        output_matrix[trial, 15] = "NA"
+        output_matrix[trial, 16] = "NA"
+
+        if Condition == "FREE/SAME":
+            corretto = entrambi_toccati and tocco1 == tocco2
+        else:  # FREE/OPPOSITE
+            corretto = entrambi_toccati and tocco1 != tocco2
+
+        output_matrix[trial, 17] = 1 if corretto else 0
+
     else:
-        output_matrix[trial, 17] = 0
+        output_matrix[trial, 15] = 1 if tocco1 == tocco_atteso_S1[idx] else 0
+        output_matrix[trial, 16] = 1 if tocco2 == tocco_atteso_S2[idx] else 0
+        output_matrix[trial, 17] = 1 if (output_matrix[trial, 15] == 1 and
+                                         output_matrix[trial, 16] == 1) else 0
 
 
 def parseOutputs(lines, output_matrix, trial):
