@@ -447,10 +447,13 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                 # player.play(trial_vec[idx])      # avvio audio (già in RAM)
                 # player.wait_onset() #attende che il suono sia partito prima di inviare il trigger
                 ser.write(b'256\n') # invia 256 ad Arduino
-                start_time = time.perf_counter() #tiene il tempo di ogni inizio trial (trasformo in millisencods)
+                time.sleep(1.2)
+                client.start() #invio del trigger
+
+                #start_time = time.perf_counter() #tiene il tempo di ogni inizio trial (trasformo in millisencods)
                 
-                #time.sleep(1.2)
-                client.start() #invio del trigger 
+                
+                 
 
                 client.sendMarker(markerNS= trigger_offset[idx], LSB= True, autoStart=False) #trigger di fine trial caricato ma ancora NON inviato
                 
@@ -461,7 +464,6 @@ def startTrial(nTrials, trial, output_matrix, output_file,
 
                 completeTrial( trial,
                         trial_vec,
-                        start_time,
                         output_matrix,
                         tocco_atteso_S1,
                         tocco_atteso_S2,
@@ -521,7 +523,6 @@ def resetTrial(output_matrix, trial):
 
 def completeTrial(trial,
     trial_vec,
-    start_time,
     output_matrix,
     tocco_atteso_S1,
     tocco_atteso_S2,
@@ -544,7 +545,7 @@ def completeTrial(trial,
     line = ''
     lines = []
 
-    while 'time difference between grasps' not in line:
+    while 'Subjects came back' not in line:
         raw = ser.readline()
 
         if not raw:
@@ -708,20 +709,20 @@ def parseOutputs(lines, output_matrix, trial):
 
 
 def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2, trigger_list, trigger_offset):
-    UP_UP = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/su-su.wav"
-    UP_DOWN = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/su-giu.wav"
-    DOWN_DOWN = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/giu-giu.wav"
-    DOWN_UP = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/giu-su.wav"
-    OPPO_OPPO = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/oppo-oppo.wav"
-    SAME_SAME = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/ugua-ugua.wav"
-    UP_OPPO = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/su-oppo.wav"   #Lead1 - Bott1
-    UP_SAME = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/su-uga.wav"   #Lead1 - Bott1
-    DOWN_OPPO = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/giu-oppo.wav"  #Lead1 - Bott1
-    DOWN_SAME = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/giu-ugua.wav"  #Lead1 - Bott1
-    OPPO_UP = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/oppo-su.wav"  #Lead2 - Bott2
-    OPPO_DOWN = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/oppo-giu.wav"  #Lead2 - Bott2
-    SAME_UP = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/ugua-su.wav"  #Lead2 - Bott2
-    SAME_DOWN = r"C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/ugua-giu.wav"  #Lead2 - Bott2
+    UP_UP = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/su-su.wav"
+    UP_DOWN = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/su-giu.wav"
+    DOWN_DOWN = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/giu-giu.wav"
+    DOWN_UP = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/giu-su.wav"
+    OPPO_OPPO = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/oppo-oppo.wav"
+    SAME_SAME = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/ugua-ugua.wav"
+    UP_OPPO = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/su-oppo.wav"   #Lead1 - Bott1
+    UP_SAME = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/su-ugua.wav"   #Lead1 - Bott1
+    DOWN_OPPO = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/giu-oppo.wav"  #Lead1 - Bott1
+    DOWN_SAME = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/giu-ugua.wav"  #Lead1 - Bott1
+    OPPO_UP = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/oppo-su.wav"  #Lead2 - Bott2
+    OPPO_DOWN = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/oppo-giu.wav"  #Lead2 - Bott2
+    SAME_UP = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/ugua-su.wav"  #Lead2 - Bott2
+    SAME_DOWN = "C:/Users/User/Documents/GitHub/Bottigliette/DUAL_task/FINAL_Experiment/Stimoli_Audio/ugua-giu.wav"  #Lead2 - Bott2
 
     
     if condition == "FREE/OPPOSITE":
