@@ -25,6 +25,12 @@ unsigned long totalTime2;
 // Other variables initialization
 unsigned long startTime;
 unsigned long timeDifference;
+unsigned long soundStart;
+unsigned long releasedTime1;
+unsigned long releasedTime2;
+unsigned long soundToGrasp1;
+unsigned long soundToGrasp2;
+
 unsigned long timeWin = 0.25; //initialize time window: 250 ms
 int n_outside = 0; // Counter for number of consecutive trials where timeDifference is outside time window
 int n_within = 0; // Counter for number of consecutive trials where timeDifference is within time window
@@ -36,6 +42,7 @@ bool isNotPressed1 = false;
 bool isNotPressed2 = false;
 bool SUB1returned = false; // condition to indicate SUB pressed the button after grasping
 bool SUB2returned = false;
+int x = 0; //variable to start the timer after the sound start in python
 // Utily functions
 
   unsigned long GetTime1(unsigned long startTime1)
@@ -119,7 +126,8 @@ bool SUB2returned = false;
  
 
 void setup() {
- Serial.begin(9600);
+ Serial.begin(115200);
+ Serial.setTimeout(10); // MODIFICATO: rete di sicurezza, se l'a-capo non arriva la lettura blocca al massimo 10 ms (default 1000 ms)
  pinMode(buttonPin1,INPUT_PULLUP);
  pinMode(touchPinUP1,INPUT);
  pinMode(touchPinDOWN1,INPUT);
@@ -138,9 +146,19 @@ void loop() {
   int buttonState2 = digitalRead(buttonPin2);
   int touchStateUP2 = digitalRead(touchPinUP2);
   int touchStateDOWN2 = digitalRead(touchPinDOWN2);
-
-
-
+  
+  
+  // Si entra solo se e' arrivato almeno un byte; altrimenti il loop prosegue subito.
+  if (Serial.available() > 0) {
+    unsigned long tRx = millis(); // timestamp preso all'arrivo del primo byte, prima di leggere il resto della riga
+    x = Serial.readStringUntil('\n').toInt(); // MODIFICATO: ritorna appena arriva '\n' (Python deve inviare b'256\n')
+    if (x == 256){
+      soundStart = tRx; 
+      //Serial.println("Sound start:");
+      //Serial.println(soundStart);
+    }
+    x = 0; // MODIFICATO: azzerato anche se il comando non era 256
+  }
   // ____________________________________________
   // ----------------FIRST BOTTLE----------------
   // ____________________________________________
@@ -153,25 +171,29 @@ void loop() {
   }
 
   if (b1 && buttonState1 == HIGH) { //Start soggetto 1
-    Serial.println("Button 1 released");
+    Serial.print("Button 1 released");
     b1 = false;
+    releasedTime1=millis()-soundStart;
+    Serial.print("Released time 1 :");
+    Serial.println(releasedTime1);
   }
 
   // First bottle, up part
   if (touchStateUP1 == HIGH && buttonReleased1 == true && touchUP1 == false) {
     
-    graspingTime1 = GetTime1(startTime1);
-    Serial.println("Grasping time UP1:");
-    Serial.println(graspingTime1);
-    Serial.println("SUB1 Grasped:");
-    
-    Serial.println("SUB1 UP");
+    //graspingTime1 = GetTime1(startTime1);
+    soundToGrasp1=millis()-soundStart;
+    //Serial.print("Grasping time UP1:");
+    //Serial.println(graspingTime1);
+    Serial.print("Sound to grasp 1:");
+    Serial.println(soundToGrasp1);
+    Serial.print("SUB1 UP");
     touchUP1 = true;
   }
 
   if (buttonState1 == LOW && touchUP1 == true && buttonReleased1 == true) {
     totalTime1 = GetTime1(startTime1);
-    Serial.println("Total time UP1:");
+    Serial.print("Total time UP1:");
     Serial.println(totalTime1);
     touchUP1 = false;
     buttonReleased1 = false;
@@ -182,19 +204,21 @@ void loop() {
   // First bottle, down part
 
   if (touchStateDOWN1 == HIGH && buttonReleased1 == true && touchDOWN1 == false) {
-    graspingTime1 = GetTime1(startTime1);
-    Serial.println("Grasping time DOWN1:");
-    Serial.println(graspingTime1);
-    Serial.println("SUB1 Grasped:");
-    
+    //graspingTime1 = GetTime1(startTime1);
+    soundToGrasp1=millis()-soundStart;
+    //Serial.print("Grasping time DOWN1:");
+    //Serial.println(graspingTime1);
+    Serial.print("Sound to grasp 1:");
+    Serial.println(soundToGrasp1);
+
     touchDOWN1 = true;
-    Serial.println("SUB1 DOWN");
+    Serial.print("SUB1 DOWN");
 
   }
 
   if (buttonState1 == LOW && touchDOWN1 == true && buttonReleased1 == true) {
     totalTime1 = GetTime1(startTime1);
-    Serial.println("Total time DOWN1:");
+    Serial.print("Total time DOWN1:");
     Serial.println(totalTime1);
     touchDOWN1 = false;
     buttonReleased1 = false;  
@@ -214,29 +238,36 @@ void loop() {
   //Serial.println(startTime2);
   buttonReleased2 = true;
   b2 = true;
+  
+
   delay(10);
   }
 
   if (b2 && buttonState2 == HIGH) { //Start soggetto 2
-    Serial.println("Button 2 released");
+    Serial.print("Button 2 released");
+    releasedTime2=millis()-soundStart;
+    Serial.print("Released time 2 :");
+    Serial.println(releasedTime2);
     b2 = false;
   }
 
   // Second bottle, up part
   if (touchStateUP2 == HIGH && buttonReleased2 == true && touchUP2 == false) {
-    graspingTime2 = GetTime2(startTime2);
-    Serial.println("Grasping time UP2:");
-    Serial.println(graspingTime2);
-    Serial.println("SUB2 Grasped:");
-    
-    Serial.println("SUB2 UP");
+    //graspingTime2 = GetTime2(startTime2);
+    soundToGrasp2=millis()-soundStart;
+    //Serial.print("Grasping time UP2:");
+    //Serial.println(graspingTime2);
+    Serial.print("Sound to grasp 2:");
+    Serial.println(soundToGrasp2);
+
+    Serial.print("SUB2 UP");
 
     touchUP2 = true;
   }
 
   if (buttonState2 == LOW && touchUP2 == true && buttonReleased2 == true) {
     totalTime2 = GetTime2(startTime2);
-    Serial.println("Total time UP2:");
+    Serial.print("Total time UP2:");
     Serial.println(totalTime2);
     touchUP2 = false;
     buttonReleased2 = false;
@@ -247,19 +278,21 @@ void loop() {
   // Second bottle, down part
 
   if (touchStateDOWN2 == HIGH && buttonReleased2 == true && touchDOWN2 == false) {
-    graspingTime2 = GetTime2(startTime2);
-    Serial.println("Grasping time DOWN2:");
-    Serial.println(graspingTime2);
-    Serial.println("SUB2 Grasped:");
-    
-    Serial.println("SUB2 DOWN");
+    //graspingTime2 = GetTime2(startTime2);
+    soundToGrasp2=millis()-soundStart;
+    //Serial.print("Grasping time DOWN2:");
+    //Serial.println(graspingTime2);
+    Serial.print("Sound to grasp 2:");
+    Serial.println(soundToGrasp2);
+
+    Serial.print("SUB2 DOWN");
 
     touchDOWN2 = true;
   }
 
   if (buttonState2 == LOW && touchDOWN2 == true && buttonReleased2 == true) {
     totalTime2 = GetTime2(startTime2);
-    Serial.println("Total time DOWN2:");
+    Serial.print("Total time DOWN2:");
     Serial.println(totalTime2);
     touchDOWN2 = false;
     buttonReleased2 = false;  
@@ -271,7 +304,7 @@ void loop() {
   if (graspingTime1 > 0 && graspingTime2 > 0)
   {
     timeDifference = abs(graspingTime1 - graspingTime2);
-    Serial.println("time difference between grasps:");
+    Serial.print("time difference between grasps:");
     Serial.println(timeDifference);
     isConsecutive(timeDifference,n_outside,n_within,timeWin);
     changeTimeWin(timeDifference,n_outside,n_within,timeWin);
@@ -282,29 +315,29 @@ void loop() {
   // Send info on grasping state
  if (buttonState1 == LOW && isPressed1 == false ) 
  {
-    Serial.println("Button 1 pressed");
+    Serial.print("Button 1 pressed");
     isPressed1 = true;
     isNotPressed1=false;
  }
   if (buttonState1 == HIGH && isNotPressed1 == false) {
-  Serial.println("Button 1 not pressed");
+  Serial.print("Button 1 not pressed");
   isNotPressed1 = true;
   isPressed1 = false;
  }
   if (buttonState2 == LOW && isPressed2 == false ) 
  {
-    Serial.println("Button 2 pressed");
+    Serial.print("Button 2 pressed");
     isPressed2 = true;
     isNotPressed2=false;
  }
   if (buttonState2 == HIGH && isNotPressed2 == false) {
-  Serial.println("Button 2 not pressed");
+  Serial.print("Button 2 not pressed");
   isNotPressed2 = true;
   isPressed2 = false;
  }
  if (SUB1returned && SUB2returned)
  {
-  Serial.println("Subjects came back");
+  Serial.print("Subjects came back");
   SUB1returned = false;
   SUB2returned = false;
  }

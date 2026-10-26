@@ -76,7 +76,7 @@ rec = None                    # creato in StartBlock, quando il participant è n
 # PARAMETRI
 # ============================================================
 
-BAUDRATE = 9600
+BAUDRATE = 115200
 
 # ============================================================
 # CONVENZIONE INDICI TRIAL
@@ -411,8 +411,7 @@ def startTrial(nTrials, trial, output_matrix, output_file,
 
     rec.open() #inizializzare la GoPro
     
-    player = StimPlayer(list(trial_vec), device=AUDIO_DEVICE)  # precarica tutti i WAV, stream sempre aperto
-
+    #winsound.PlaySound(trial_vec[trial - 1], winsound.SND_FILENAME | winsound.SND_ASYNC)
     try:
         while True:
             idx = trial - 1   # indice 0-based negli array per-trial (trial è 1-based)
@@ -444,10 +443,10 @@ def startTrial(nTrials, trial, output_matrix, output_file,
 
                 #ser.write(b"start")
 
-                #winsound.PlaySound(trial_vec[idx], winsound.SND_FILENAME | winsound.SND_ASYNC) #invio dei comandi tramite cuffie ai partecipanti
-                player.play(trial_vec[idx])      # avvio audio (già in RAM)
-                player.wait_onset() #attende che il suono sia partito prima di inviare il trigger
-                
+                winsound.PlaySound(trial_vec[idx], winsound.SND_FILENAME | winsound.SND_ASYNC) #invio dei comandi tramite cuffie ai partecipanti
+                # player.play(trial_vec[idx])      # avvio audio (già in RAM)
+                # player.wait_onset() #attende che il suono sia partito prima di inviare il trigger
+                ser.write(b'256\n') # invia 256 ad Arduino
                 start_time = time.perf_counter() #tiene il tempo di ogni inizio trial (trasformo in millisencods)
                 
                 #time.sleep(1.2)
@@ -502,7 +501,7 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                 print(f'Trial resettato: si ripete il trial {trial}.')
     finally:
         rec.close()
-        player.close()
+        #player.close()
 
 def resetTrial(output_matrix, trial):
     """
@@ -569,16 +568,17 @@ def completeTrial(trial,
 
         if 'Button 1 released' in line:
             gui_queue.put("SUB1_RED")
-            ButtonTimeReleased1 = time.perf_counter()
-            output_matrix[trial, 3] = float((ButtonTimeReleased1 - start_time) * 1000)
+            
+            # ButtonTimeReleased1 = time.perf_counter()
+            # output_matrix[trial, 3] = float((ButtonTimeReleased1 - start_time) * 1000)
 
         if 'Button 2 pressed' in line:
             gui_queue.put("SUB2_GREEN")
 
         if 'Button 2 released' in line:
             gui_queue.put("SUB2_RED")
-            ButtonTimeReleased2 = time.perf_counter()
-            output_matrix[trial, 4] = float((ButtonTimeReleased2 - start_time) * 1000)
+            # ButtonTimeReleased2 = time.perf_counter()
+            # output_matrix[trial, 4] = float((ButtonTimeReleased2 - start_time) * 1000)
 
         # ====================================================
         # SCRITTE TOCCO SU / TOCCO GIU
@@ -604,13 +604,13 @@ def completeTrial(trial,
         # DATI TRIAL
         # ====================================================
 
-        if 'SUB1 Grasped' in line:
-            StopSub1 = time.perf_counter()
-            output_matrix[trial, 6] = float((StopSub1 - start_time))
+        # if 'SUB1 Grasped' in line:
+        #     StopSub1 = time.perf_counter()
+        #     output_matrix[trial, 6] = float((StopSub1 - start_time))
 
-        if 'SUB2 Grasped' in line:
-            StopSub2 = time.perf_counter()
-            output_matrix[trial, 7] = float((StopSub2 - start_time))
+        # if 'SUB2 Grasped' in line:
+        #     StopSub2 = time.perf_counter()
+        #     output_matrix[trial, 7] = float((StopSub2 - start_time))
 
 
     client.start() #invio trigger offset
@@ -681,15 +681,27 @@ def parseOutputs(lines, output_matrix, trial):
         if len(output) < 2:
             continue
 
-        if ('Grasping time UP1' in line) or ('Grasping time DOWN1' in line):
-            TempoMovimentoSub1 = int(output[1])
+        # if ('Grasping time UP1' in line) or ('Grasping time DOWN1' in line):
+        #     TempoMovimentoSub1 = int(output[1])
 
-        if ('Grasping time UP2' in line) or ('Grasping time DOWN2' in line):
-            TempoMovimentoSub2 = int(output[1])
+        # if ('Grasping time UP2' in line) or ('Grasping time DOWN2' in line):
+        #     TempoMovimentoSub2 = int(output[1])
 
-    output_matrix[trial, 0] = TempoMovimentoSub1
-    output_matrix[trial, 1] = TempoMovimentoSub2
-    output_matrix[trial, 2] = np.abs(TempoMovimentoSub1 - TempoMovimentoSub2)
+        if ('Released time 1' in line):
+            output_matrix[trial, 3] = float(output[1])
+
+        if ('Released time 2' in line):
+            output_matrix[trial, 4] = float(output[1])
+
+        if ('Sound to grasp 1' in line):
+            output_matrix[trial, 6] = float(output[1])
+
+        if ('Sound to grasp 2' in line):
+            output_matrix[trial, 7] = float(output[1])
+
+    output_matrix[trial, 0] = np.abs(output_matrix[trial, 3] - output_matrix[trial, 6])
+    output_matrix[trial, 1] = np.abs(output_matrix[trial, 4] - output_matrix[trial, 7])
+    output_matrix[trial, 2] = np.abs(output_matrix[trial, 0] - output_matrix[trial, 1])
     # output_matrix[trial, 6] = StopSub1
     # output_matrix[trial, 7] = StopSub2
     # output_matrix[trial, 8] = np.abs(StopSub1 - StopSub2)
@@ -936,7 +948,7 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
 
     if condition_order is None:
 
-        nTrials = 4 #cambia in base al numero di trials desiderato
+        nTrials = 3 #cambia in base al numero di trials desiderato
 
         if nTrials % 2 != 0 and not condition.startswith("FREE"):
             print(f"ATTENZIONE: nTrials = {nTrials} è dispari -> le sotto-condizioni "
