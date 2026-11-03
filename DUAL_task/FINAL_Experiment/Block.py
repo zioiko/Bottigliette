@@ -475,10 +475,10 @@ def startTrial(nTrials, trial, output_matrix, output_file,
                 output_matrix[trial, 22] = datetime.fromtimestamp(trial_time_start).strftime('%H:%M:%S.%f')[:-3]
                 output_matrix[trial, 23] = datetime.fromtimestamp(trial_time_stop).strftime('%H:%M:%S.%f')[:-3]
 
-                time.sleep(0.3) #questo time serve per non far droppare gli ultimi frame del video (da verificare?)
+                #time.sleep(0.3) #questo time serve per non far droppare gli ultimi frame del video (da verificare?)
 
-                video_path = rec.stop_recording()
-                print(f"Video salvato: {video_path}")
+                #video_path = rec.stop_recording()
+                #  print(f"Video salvato: {video_path}")
 
 
                 save_output(output_file, output_matrix)
@@ -544,6 +544,9 @@ def completeTrial(trial,
 
     line = ''
     lines = []
+    grasped1 = False
+    grasped2 = False
+    trial_ended = False
 
     while 'Subjects came back' not in line:
         raw = ser.readline()
@@ -605,16 +608,21 @@ def completeTrial(trial,
         # DATI TRIAL
         # ====================================================
 
-        # if 'SUB1 Grasped' in line:
+        if 'SUB1 Grasped' in line:
         #     StopSub1 = time.perf_counter()
-        #     output_matrix[trial, 6] = float((StopSub1 - start_time))
+            grasped1 = True
 
-        # if 'SUB2 Grasped' in line:
+        if 'SUB2 Grasped' in line:
         #     StopSub2 = time.perf_counter()
-        #     output_matrix[trial, 7] = float((StopSub2 - start_time))
+            grasped2 = True
 
 
-    client.start() #invio trigger offset
+        if grasped1 and grasped2 and not trial_ended:
+            trial_ended = True
+            client.start()                    # trigger offset
+            time.sleep(0.3)                   # per non perdere gli ultimi frame
+            video_path = rec.stop_recording()
+            print(f"Video salvato: {video_path}")
 
     parseOutputs(lines, output_matrix, trial)
 
@@ -913,6 +921,32 @@ def createBlock(condition, trial_vec, nTrials, tocco_atteso_S1, tocco_atteso_S2,
             tocco_atteso_S2[i] = trial[2]
             trigger_list[i] = trial[3]
             trigger_offset[i] = trial[4]
+
+
+    elif condition == "CUED/SINGLE":
+        lista_vec = []
+        for i in range(0, nTrials):
+            if i < nTrials / 2:
+                lista_vec.append(
+                    (UP_UP,
+                    1,
+                    1, 
+                    9,
+                    19))
+            else:
+                lista_vec.append(
+                    (DOWN_DOWN,
+                    2,
+                    2, 
+                    9,
+                    19))
+        np.random.shuffle(lista_vec)
+        for i, trial in enumerate(lista_vec):
+            trial_vec[i] = trial[0]
+            tocco_atteso_S1[i] = trial[1]
+            tocco_atteso_S2[i] = trial[2]
+            trigger_list[i] = trial[3]
+            trigger_offset[i] = trial[4]
             
     
     return 
@@ -949,7 +983,7 @@ def StartBlock(participant, block, condition, condition_order, output_path, mast
 
     if condition_order is None:
 
-        nTrials = 3 #cambia in base al numero di trials desiderato
+        nTrials = 64 #cambia in base al numero di trials desiderato
 
         if nTrials % 2 != 0 and not condition.startswith("FREE"):
             print(f"ATTENZIONE: nTrials = {nTrials} è dispari -> le sotto-condizioni "
